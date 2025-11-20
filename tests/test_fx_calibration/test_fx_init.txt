@@ -1,0 +1,36 @@
+"""
+FX model test suite.
+
+This module contains comprehensive tests for the FX model functionality
+including basic model tests, correlation tests, pricing tests, smile tests,
+and basket option tests.
+"""
+
+from .test_fx_model import TestLrwFxModel, TestModelParameterVariations
+from .test_fx_correlation import TestFxCorrelation, TestCorrelationImpactOnPricing
+from .test_fx_pricing import TestFxOptionPricing, TestFxGreeks, TestPricingEdgeCases
+from .test_fx_smile import TestFxVolatilitySmile, TestSmileParameterSensitivity
+from .test_fx_basket import TestFxBasketOptions, TestBasketEdgeCases
+
+__all__ = [
+    # Model tests
+    'TestLrwFxModel',
+    'TestModelParameterVariations',
+    
+    # Correlation tests
+    'TestFxCorrelation',
+    'TestCorrelationImpactOnPricing',
+    
+    # Pricing tests
+    'TestFxOptionPricing',
+    'TestFxGreeks',
+    'TestPricingEdgeCases',
+    
+    # Smile tests
+    'TestFxVolatilitySmile',
+    'TestSmileParameterSensitivity',
+    
+    # Basket tests
+    'TestFxBasketOptions',
+    'TestBasketEdgeCases'
+]

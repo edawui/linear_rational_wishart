@@ -1,0 +1,429 @@
+"""
+Tests for FX volatility smile behavior.
+
+This module tests the volatility smile characteristics produced
+by the LRW FX model across different strikes and parameter configurations.
+"""
+
+import numpy as np
+import pytest
+from numpy.testing import assert_array_almost_equal, assert_almost_equal
+
+from wishart_processes.models.fx import LrwFx
+from wishart_processes.pricing import black_scholes
+
+
+class TestFxVolatilitySmile:
+    """Test volatility smile characteristics of the FX model."""
+    
+    @pytest.fixture
+    def base_model(self):
+        """Create base FX model for smile testing."""
+        n = 2
+        
+        x0 = np.array([[4.99996419e+00, -3.18397238e-04],
+                       [-3.18397238e-04, 4.88302000e-04]])
+        
+        omega = np.array([[2.09114424e+00, -8.04612684e-04],
+                          [-8.04612684e-04, 1.92477100e-03]])
+        
+        m = np.array([[-0.20583617, 0.0],
+                      [0.0, -0.02069993]])
+        
+        sigma = np.array([[0.15871937, 0.10552826],
+                          [0.10552826, 0.02298161]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        fx_spot = 1.0
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, fx_spot)
+    
+    def compute_implied_volatilities(self, model, maturity, strikes, pricing_method="FOURIER"):
+        """Compute implied volatilities for given strikes."""
+        # Get forward and discount factors
+        fx_fwd = model.compute_fx_fwd(maturity)
+        df_foreign = model.lrw_currency_i.bond(maturity)
+        df_domestic = model.lrw_currency_j.bond(maturity)
+        r_f = -np.log(df_foreign) / maturity
+        r_d = -np.log(df_domestic) / maturity
+        
+        # Price options for all strikes
+        maturities = [maturity] * len(strikes)
+        call_flags = [True] * len(strikes)
+        
+        prices = model.price_fx_option_list(
+            pricing_method,
+            maturities,
+            strikes,
+            call_flags,
+            nb_mc=1000,  # Lower for testing
+            dt=1/50.0,
+            schema="EULER_FLOORED"
+        )
+        
+        # Compute implied volatilities
+        implied_vols = []
+        for i, (strike, price) in enumerate(zip(strikes, prices)):
+            try:
+                iv = black_scholes.implied_volatility_fx(
+                    model.fx_spot, r_d, r_f, strike, maturity, price, True
+                )
+                implied_vols.append(iv)
+            except:
+                # If implied vol fails, use a placeholder
+                implied_vols.append(np.nan)
+        
+        return np.array(implied_vols)
+    
+    def test_smile_exists(self, base_model):
+        """Test that the model produces a volatility smile."""
+        maturity = 1.0
+        fx_fwd = base_model.compute_fx_fwd(maturity)
+        
+        # Test strikes around ATM
+        moneyness = np.array([0.9, 0.95, 1.0, 1.05, 1.1])
+        strikes = moneyness * fx_fwd
+        
+        implied_vols = self.compute_implied_volatilities(base_model, maturity, strikes)
+        
+        # Remove any NaN values
+        valid_vols = implied_vols[~np.isnan(implied_vols)]
+        
+        # Should have computed some valid vols
+        assert len(valid_vols) > 0
+        
+        # Volatilities should be positive
+        assert np.all(valid_vols > 0)
+        
+        # There should be some variation (smile/skew)
+        vol_range = np.max(valid_vols) - np.min(valid_vols)
+        assert vol_range > 0.001  # At least 0.1% variation
+    
+    def test_smile_shape_with_correlation(self, base_model):
+        """Test how correlation affects smile shape."""
+        maturity = 1.0
+        fx_fwd = base_model.compute_fx_fwd(maturity)
+        
+        # Test strikes
+        moneyness = np.array([0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15])
+        strikes = moneyness * fx_fwd
+        
+        # Test different correlation levels
+        correlations = [-0.5, 0.0, 0.5]
+        
+        smile_shapes = {}
+        
+        for corr in correlations:
+            # Modify correlation in sigma matrix
+            sigma = base_model._sigma.copy()
+            sigma_diag = np.sqrt(sigma[0, 0] * sigma[1, 1])
+            sigma[0, 1] = sigma[1, 0] = corr * sigma_diag
+            
+            # Create new model with modified correlation
+            model = LrwFx(
+                base_model._n,
+                base_model._x0,
+                base_model._omega,
+                base_model._m,
+                sigma,
+                base_model._alpha_i,
+                base_model.u_i,
+                base_model._alpha_j,
+                base_model.u_j,
+                base_model.fx_spot
+            )
+            
+            # Compute smile
+            implied_vols = self.compute_implied_volatilities(model, maturity, strikes, "MC")
+            smile_shapes[corr] = implied_vols
+        
+        # Different correlations should produce different smile shapes
+        for i, corr1 in enumerate(correlations[:-1]):
+            for corr2 in correlations[i+1:]:
+                vols1 = smile_shapes[corr1]
+                vols2 = smile_shapes[corr2]
+                
+                # Remove NaN values for comparison
+                valid_mask = ~(np.isnan(vols1) | np.isnan(vols2))
+                if np.any(valid_mask):
+                    # Shapes should be different
+                    assert not np.allclose(vols1[valid_mask], vols2[valid_mask], rtol=1e-2)
+    
+    def test_smile_across_maturities(self, base_model):
+        """Test smile behavior across different maturities."""
+        maturities = [0.5, 1.0, 2.0, 5.0]
+        
+        smile_by_maturity = {}
+        
+        for maturity in maturities:
+            fx_fwd = base_model.compute_fx_fwd(maturity)
+            
+            # Use fewer strikes for faster testing
+            moneyness = np.array([0.9, 1.0, 1.1])
+            strikes = moneyness * fx_fwd
+            
+            implied_vols = self.compute_implied_volatilities(
+                base_model, maturity, strikes, "MC"
+            )
+            
+            smile_by_maturity[maturity] = implied_vols
+        
+        # Smile should exist for all maturities
+        for mat, vols in smile_by_maturity.items():
+            valid_vols = vols[~np.isnan(vols)]
+            assert len(valid_vols) > 0
+            assert np.all(valid_vols > 0)
+    
+    def test_atm_volatility_term_structure(self, base_model):
+        """Test ATM volatility term structure."""
+        maturities = np.array([0.25, 0.5, 1.0, 2.0, 3.0, 5.0])
+        
+        atm_vols = []
+        
+        for maturity in maturities:
+            # ATM strike is the forward
+            fx_fwd = base_model.compute_fx_fwd(maturity)
+            strikes = [fx_fwd]
+            
+            implied_vols = self.compute_implied_volatilities(
+                base_model, maturity, strikes, "MC"
+            )
+            
+            if len(implied_vols) > 0 and not np.isnan(implied_vols[0]):
+                atm_vols.append(implied_vols[0])
+            else:
+                atm_vols.append(np.nan)
+        
+        atm_vols = np.array(atm_vols)
+        valid_vols = atm_vols[~np.isnan(atm_vols)]
+        
+        # Should have some valid ATM vols
+        assert len(valid_vols) > 0
+        
+        # ATM vols should be positive
+        assert np.all(valid_vols > 0)
+        
+        # Term structure should show some variation
+        if len(valid_vols) > 1:
+            vol_range = np.max(valid_vols) - np.min(valid_vols)
+            assert vol_range > 0  # Some term structure
+    
+    def test_smile_symmetry(self, base_model):
+        """Test smile symmetry properties."""
+        maturity = 1.0
+        fx_fwd = base_model.compute_fx_fwd(maturity)
+        
+        # Test symmetric strikes around ATM
+        deviations = np.array([0.9, 0.95, 1.0, 1.05, 1.1])
+        strikes = deviations * fx_fwd
+        
+        implied_vols = self.compute_implied_volatilities(
+            base_model, maturity, strikes, "MC"
+        )
+        
+        # Find ATM index
+        atm_idx = len(deviations) // 2
+        
+        # In general, smile may not be symmetric due to model dynamics
+        # but vols should be smooth
+        valid_vols = implied_vols[~np.isnan(implied_vols)]
+        if len(valid_vols) > 2:
+            # Check for smoothness - large jumps are unexpected
+            vol_diffs = np.diff(valid_vols)
+            assert np.all(np.abs(vol_diffs) < 0.5)  # No jumps > 50%
+
+
+class TestSmileParameterSensitivity:
+    """Test smile sensitivity to model parameters."""
+    
+    def create_base_model(self):
+        """Create base model for sensitivity testing."""
+        n = 2
+        
+        x0 = np.array([[0.05, 0.0], [0.0, 0.05]])
+        omega = np.array([[0.02, 0.0], [0.0, 0.02]])
+        m = np.array([[-0.2, 0.0], [0.0, -0.2]])
+        sigma = np.array([[0.05, 0.0], [0.0, 0.05]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        fx_spot = 1.0
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, fx_spot)
+    
+    def test_sigma_scaling_effect(self):
+        """Test effect of scaling sigma on smile."""
+        base_model = self.create_base_model()
+        maturity = 1.0
+        
+        # Test strikes
+        fx_fwd = base_model.compute_fx_fwd(maturity)
+        moneyness = np.array([0.9, 1.0, 1.1])
+        strikes = moneyness * fx_fwd
+        
+        # Test different sigma scalings
+        scalings = [1.0, 2.0, 3.0]
+        
+        atm_vols_by_scaling = []
+        
+        for scale in scalings:
+            # Scale sigma
+            sigma_scaled = base_model._sigma * scale
+            
+            model = LrwFx(
+                base_model._n,
+                base_model._x0,
+                base_model._omega,
+                base_model._m,
+                sigma_scaled,
+                base_model._alpha_i,
+                base_model.u_i,
+                base_model._alpha_j,
+                base_model.u_j,
+                base_model.fx_spot
+            )
+            
+            # Get ATM vol
+            implied_vols = self.compute_implied_volatilities(
+                model, maturity, [fx_fwd], "MC"
+            )
+            
+            if len(implied_vols) > 0 and not np.isnan(implied_vols[0]):
+                atm_vols_by_scaling.append(implied_vols[0])
+        
+        # Higher sigma should lead to higher implied vols
+        if len(atm_vols_by_scaling) > 1:
+            for i in range(len(atm_vols_by_scaling) - 1):
+                assert atm_vols_by_scaling[i+1] >= atm_vols_by_scaling[i] * 0.9
+    
+    def test_mean_reversion_effect(self):
+        """Test effect of mean reversion on smile."""
+        base_model = self.create_base_model()
+        maturity = 2.0  # Longer maturity to see mean reversion effect
+        
+        # Test different mean reversion speeds
+        m_values = [-0.1, -0.2, -0.4]  # Increasing mean reversion
+        
+        smile_curvatures = []
+        
+        for m_val in m_values:
+            # Set mean reversion
+            m = np.array([[m_val, 0.0], [0.0, m_val]])
+            
+            model = LrwFx(
+                base_model._n,
+                base_model._x0,
+                base_model._omega,
+                m,
+                base_model._sigma,
+                base_model._alpha_i,
+                base_model.u_i,
+                base_model._alpha_j,
+                base_model.u_j,
+                base_model.fx_spot
+            )
+            
+            # Compute smile
+            fx_fwd = model.compute_fx_fwd(maturity)
+            strikes = np.array([0.9, 1.0, 1.1]) * fx_fwd
+            
+            implied_vols = self.compute_implied_volatilities(
+                model, maturity, strikes, "MC"
+            )
+            
+            # Measure smile curvature if we have valid vols
+            valid_vols = implied_vols[~np.isnan(implied_vols)]
+            if len(valid_vols) >= 3:
+                # Simple curvature measure
+                curvature = valid_vols[0] + valid_vols[-1] - 2 * valid_vols[len(valid_vols)//2]
+                smile_curvatures.append(curvature)
+        
+        # Different mean reversions should affect smile shape
+        if len(smile_curvatures) > 1:
+            assert not np.allclose(smile_curvatures, smile_curvatures[0])
+    
+    def test_initial_variance_effect(self):
+        """Test effect of initial variance X0 on smile."""
+        base_model = self.create_base_model()
+        maturity = 1.0
+        
+        # Test different initial variances
+        x0_scales = [0.5, 1.0, 2.0]
+        
+        atm_vols = []
+        
+        for scale in x0_scales:
+            # Scale X0
+            x0_scaled = base_model._x0 * scale
+            
+            model = LrwFx(
+                base_model._n,
+                x0_scaled,
+                base_model._omega,
+                base_model._m,
+                base_model._sigma,
+                base_model._alpha_i,
+                base_model.u_i,
+                base_model._alpha_j,
+                base_model.u_j,
+                base_model.fx_spot
+            )
+            
+            # Get ATM vol
+            fx_fwd = model.compute_fx_fwd(maturity)
+            implied_vols = self.compute_implied_volatilities(
+                model, maturity, [fx_fwd], "MC"
+            )
+            
+            if len(implied_vols) > 0 and not np.isnan(implied_vols[0]):
+                atm_vols.append(implied_vols[0])
+        
+        # Higher initial variance should lead to higher short-term vols
+        if len(atm_vols) > 1:
+            # Check that there's some relationship
+            assert max(atm_vols) > min(atm_vols)
+
+
+# Helper function for computing implied volatilities
+def compute_implied_volatilities(model, maturity, strikes, pricing_method="FOURIER", nb_mc=1000):
+    """Helper function to compute implied volatilities."""
+    # Get forward and discount factors
+    fx_fwd = model.compute_fx_fwd(maturity)
+    df_foreign = model.lrw_currency_i.bond(maturity)
+    df_domestic = model.lrw_currency_j.bond(maturity)
+    r_f = -np.log(df_foreign) / maturity
+    r_d = -np.log(df_domestic) / maturity
+    
+    # Price options for all strikes
+    maturities = [maturity] * len(strikes)
+    call_flags = [True] * len(strikes)
+    
+    prices = model.price_fx_option_list(
+        pricing_method,
+        maturities,
+        strikes,
+        call_flags,
+        nb_mc=nb_mc,
+        dt=1/50.0,
+        schema="EULER_FLOORED",
+        ur=0.5,
+        nmax=100
+    )
+    
+    # Compute implied volatilities
+    implied_vols = []
+    for strike, price in zip(strikes, prices):
+        try:
+            iv = black_scholes.implied_volatility_fx(
+                model.fx_spot, r_d, r_f, strike, maturity, price, True
+            )
+            implied_vols.append(iv)
+        except:
+            implied_vols.append(np.nan)
+    
+    return np.array(implied_vols)

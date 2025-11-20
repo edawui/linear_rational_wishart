@@ -1,0 +1,322 @@
+"""
+Tests for FX model correlation calculations.
+
+This module tests the correlation and covariance calculations
+in the LRW FX model.
+"""
+
+import numpy as np
+import pytest
+from numpy.testing import assert_array_almost_equal, assert_almost_equal
+
+from wishart_processes.models.fx import LrwFx
+
+
+class TestFxCorrelation:
+    """Test FX volatility correlation and covariance calculations."""
+    
+    @pytest.fixture
+    def base_model_params(self):
+        """Base model parameters for correlation testing."""
+        n = 2
+        
+        # Start with uncorrelated matrices
+        x0 = np.array([[0.05, 0.0],
+                       [0.0, 0.05]])
+        
+        omega = np.array([[0.02, 0.0],
+                          [0.0, 0.02]])
+        
+        m = np.array([[-0.2, 0.0],
+                      [0.0, -0.2]])
+        
+        sigma = np.array([[0.05, 0.0],
+                          [0.0, 0.05]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        fx_spot = 1.0
+        
+        return {
+            'n': n,
+            'x0': x0,
+            'omega': omega,
+            'm': m,
+            'sigma': sigma,
+            'alpha_i': alpha_i,
+            'alpha_j': alpha_j,
+            'u_i': u_i,
+            'u_j': u_j,
+            'fx_spot': fx_spot
+        }
+    
+    def create_correlated_matrices(self, base_params, correlation):
+        """Create correlated parameter matrices."""
+        params = base_params.copy()
+        
+        # Add correlation to X0
+        x0 = params['x0'].copy()
+        x0[0, 1] = x0[1, 0] = correlation * np.sqrt(x0[0, 0] * x0[1, 1])
+        params['x0'] = x0
+        
+        # Add correlation to Omega
+        omega = params['omega'].copy()
+        omega[0, 1] = omega[1, 0] = correlation * np.sqrt(omega[0, 0] * omega[1, 1])
+        params['omega'] = omega
+        
+        # Add correlation to Sigma
+        sigma = params['sigma'].copy()
+        sigma[0, 1] = sigma[1, 0] = correlation * np.sqrt(sigma[0, 0] * sigma[1, 1])
+        params['sigma'] = sigma
+        
+        return params
+    
+    def test_zero_correlation(self, base_model_params):
+        """Test correlation calculation with uncorrelated parameters."""
+        model = LrwFx(**base_model_params)
+        
+        # Compute correlation
+        fx_vol_corr = model.compute_fx_vol_corr()
+        
+        # With diagonal matrices, correlation should be zero
+        assert_almost_equal(fx_vol_corr, 0.0, decimal=10)
+        
+        # Covariance should also be zero
+        fx_vol_covar = model.compute_fx_vol_covar()
+        assert_almost_equal(fx_vol_covar, 0.0, decimal=10)
+    
+    def test_positive_correlation(self, base_model_params):
+        """Test correlation calculation with positive correlation."""
+        correlation = 0.5
+        params = self.create_correlated_matrices(base_model_params, correlation)
+        
+        model = LrwFx(**params)
+        
+        # Compute correlation
+        fx_vol_corr = model.compute_fx_vol_corr()
+        
+        # Correlation should be positive
+        assert fx_vol_corr > 0
+        assert fx_vol_corr <= 1.0
+        
+        # Covariance should also be positive
+        fx_vol_covar = model.compute_fx_vol_covar()
+        assert fx_vol_covar > 0
+    
+    def test_negative_correlation(self, base_model_params):
+        """Test correlation calculation with negative correlation."""
+        correlation = -0.5
+        params = self.create_correlated_matrices(base_model_params, correlation)
+        
+        model = LrwFx(**params)
+        
+        # Compute correlation
+        fx_vol_corr = model.compute_fx_vol_corr()
+        
+        # Correlation should be negative
+        assert fx_vol_corr < 0
+        assert fx_vol_corr >= -1.0
+        
+        # Covariance should be negative
+        fx_vol_covar = model.compute_fx_vol_covar()
+        assert fx_vol_covar < 0
+    
+    def test_correlation_bounds(self, base_model_params):
+        """Test that correlation stays within [-1, 1] bounds."""
+        correlations = [-0.9, -0.5, 0.0, 0.5, 0.9]
+        
+        for corr in correlations:
+            params = self.create_correlated_matrices(base_model_params, corr)
+            model = LrwFx(**params)
+            
+            fx_vol_corr = model.compute_fx_vol_corr()
+            
+            # Correlation should be within bounds
+            assert -1.0 <= fx_vol_corr <= 1.0
+    
+    def test_correlation_consistency(self, base_model_params):
+        """Test consistency between correlation and covariance."""
+        correlation = 0.6
+        params = self.create_correlated_matrices(base_model_params, correlation)
+        
+        model = LrwFx(**params)
+        
+        # Compute both
+        fx_vol_corr = model.compute_fx_vol_corr()
+        fx_vol_covar = model.compute_fx_vol_covar()
+        
+        # They should have the same sign
+        assert np.sign(fx_vol_corr) == np.sign(fx_vol_covar)
+    
+    def test_correlation_after_parameter_update(self, base_model_params):
+        """Test correlation calculation after updating parameters."""
+        model = LrwFx(**base_model_params)
+        
+        # Initial correlation should be zero
+        initial_corr = model.compute_fx_vol_corr()
+        assert_almost_equal(initial_corr, 0.0, decimal=10)
+        
+        # Update X0 with correlation
+        new_x0 = np.array([[0.05, -0.02],
+                           [-0.02, 0.05]])
+        model.set_x0(new_x0)
+        
+        # Correlation should now be negative
+        updated_corr = model.compute_fx_vol_corr()
+        assert updated_corr < 0
+        
+        # Covariance should also be negative
+        updated_covar = model.compute_fx_vol_covar()
+        assert updated_covar < 0
+    
+    def test_correlation_matrix_properties(self, base_model_params):
+        """Test mathematical properties of correlation calculations."""
+        correlations = np.linspace(-0.9, 0.9, 10)
+        
+        for corr in correlations:
+            params = self.create_correlated_matrices(base_model_params, corr)
+            
+            # Verify matrices remain positive definite
+            for matrix_name in ['x0', 'omega', 'sigma']:
+                matrix = params[matrix_name]
+                eigenvalues = np.linalg.eigvals(matrix)
+                assert np.all(eigenvalues > 0), \
+                    f"Matrix {matrix_name} not positive definite with correlation {corr}"
+            
+            # Create model and compute correlation
+            model = LrwFx(**params)
+            fx_vol_corr = model.compute_fx_vol_corr()
+            
+            # Verify correlation is valid
+            assert -1.0 <= fx_vol_corr <= 1.0
+    
+    def test_extreme_correlations(self, base_model_params):
+        """Test model behavior with extreme correlations."""
+        # Test near-perfect positive correlation
+        high_corr = 0.95
+        params_high = self.create_correlated_matrices(base_model_params, high_corr)
+        model_high = LrwFx(**params_high)
+        
+        fx_vol_corr_high = model_high.compute_fx_vol_corr()
+        assert 0.8 < fx_vol_corr_high <= 1.0
+        
+        # Test near-perfect negative correlation
+        low_corr = -0.95
+        params_low = self.create_correlated_matrices(base_model_params, low_corr)
+        model_low = LrwFx(**params_low)
+        
+        fx_vol_corr_low = model_low.compute_fx_vol_corr()
+        assert -1.0 <= fx_vol_corr_low < -0.8
+    
+    def test_asymmetric_volatility_correlation(self, base_model_params):
+        """Test correlation with asymmetric volatility parameters."""
+        params = base_model_params.copy()
+        
+        # Create asymmetric sigma matrix
+        sigma = np.array([[0.1, 0.02],
+                          [0.02, 0.02]])
+        params['sigma'] = sigma
+        
+        # Also make X0 asymmetric
+        x0 = np.array([[0.08, 0.01],
+                       [0.01, 0.03]])
+        params['x0'] = x0
+        
+        model = LrwFx(**params)
+        
+        # Correlation should still be valid
+        fx_vol_corr = model.compute_fx_vol_corr()
+        assert -1.0 <= fx_vol_corr <= 1.0
+        
+        # Test with different asymmetry
+        sigma2 = np.array([[0.02, 0.02],
+                           [0.02, 0.1]])
+        params['sigma'] = sigma2
+        
+        model2 = LrwFx(**params)
+        fx_vol_corr2 = model2.compute_fx_vol_corr()
+        assert -1.0 <= fx_vol_corr2 <= 1.0
+        
+        # Correlations should be different due to asymmetry
+        assert abs(fx_vol_corr - fx_vol_corr2) > 0.01
+
+
+class TestCorrelationImpactOnPricing:
+    """Test how correlation affects option pricing."""
+    
+    @pytest.fixture
+    def pricing_params(self):
+        """Parameters for pricing tests."""
+        return {
+            'maturity': 1.0,
+            'strikes': [0.9, 0.95, 1.0, 1.05, 1.1],
+            'fx_spot': 1.0
+        }
+    
+    def create_model_with_correlation(self, correlation):
+        """Create model with specified correlation level."""
+        n = 2
+        
+        # Base values
+        x0_diag = 0.05
+        omega_diag = 0.02
+        sigma_diag = 0.05
+        
+        # Create correlated matrices
+        x0 = np.array([[x0_diag, 0.0], [0.0, x0_diag]])
+        x0[0, 1] = x0[1, 0] = correlation * x0_diag
+        
+        omega = np.array([[omega_diag, 0.0], [0.0, omega_diag]])
+        omega[0, 1] = omega[1, 0] = correlation * omega_diag
+        
+        sigma = np.array([[sigma_diag, 0.0], [0.0, sigma_diag]])
+        sigma[0, 1] = sigma[1, 0] = correlation * sigma_diag
+        
+        m = np.array([[-0.2, 0.0], [0.0, -0.2]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, 1.0)
+    
+    def test_correlation_impact_on_forward(self, pricing_params):
+        """Test how correlation affects forward prices."""
+        correlations = [-0.5, 0.0, 0.5]
+        maturity = pricing_params['maturity']
+        
+        forwards = []
+        for corr in correlations:
+            model = self.create_model_with_correlation(corr)
+            fx_fwd = model.compute_fx_fwd(maturity)
+            forwards.append(fx_fwd)
+        
+        # All forwards should be positive
+        assert all(fwd > 0 for fwd in forwards)
+        
+        # Forwards might differ slightly due to correlation effects
+        # but should be relatively close
+        assert max(forwards) / min(forwards) < 1.1
+    
+    def test_correlation_consistency_across_strikes(self, pricing_params):
+        """Test that correlation calculation is consistent across strikes."""
+        correlation = 0.5
+        model = self.create_model_with_correlation(correlation)
+        
+        strikes = pricing_params['strikes']
+        maturity = pricing_params['maturity']
+        
+        # Set different strikes and check correlation remains the same
+        for strike in strikes:
+            model.set_option_properties(maturity, strike)
+            
+            # Correlation should not depend on strike
+            fx_vol_corr = model.compute_fx_vol_corr()
+            fx_vol_covar = model.compute_fx_vol_covar()
+            
+            # Should be consistent
+            assert -1.0 <= fx_vol_corr <= 1.0
+            assert np.sign(fx_vol_corr) == np.sign(fx_vol_covar)

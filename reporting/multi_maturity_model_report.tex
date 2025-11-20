@@ -1,0 +1,2694 @@
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{rotating}
+\usepackage{pdflscape}
+\geometry{margin=0.8in}
+
+\title{LRW FX Model Multi-Maturity Calibration Report}
+\author{Model Calibration Team}
+\date{\today}
+
+\begin{document}
+
+\graphicspath{{charts/}}
+
+\maketitle
+
+\section{Executive Summary}
+This report presents the calibrated parameters for the LRW (Linear-Rational-Wishart) FX Model across multiple calibration dates and option maturities. The model is calibrated on domestic and foreign curves with various option tenor configurations.
+
+\subsection{Calibration Overview}
+\begin{itemize}
+\item \textbf{Model Type:} LRW FX Model
+\item \textbf{Dimensions:} 2-factor model
+\item \textbf{Calibration Dates:} 5 dates from 2025-03-14 to 2025-05-30
+\item \textbf{Option Tenors:} 1Y, 2Y, 3Y, 4Y, 5Y, 7Y, 10Y, 3Y-7Y
+\item \textbf{Zero Coupon Curve Range:} 2Y to 11Y
+\item \textbf{Calibration Objectives:} Price (bonds), Volatility (options)
+\end{itemize}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Model Type & LRW FX Model \\
+Dimensions (n) & 2 \\
+Jump Component & No Jump \\
+$\alpha_i$ relationship & Varies by tenor \\
+\bottomrule
+\end{tabular}
+\caption{General Model Settings}
+\end{table}
+
+\section{Calibration Quality Summary}
+
+
+\begin{landscape}
+\begin{longtable}{lccccc}
+\caption{Calibration Quality Metrics by Date and Tenor} \\
+\toprule
+Date & Tenor & RMSE OIS Price & RMSE OIS Yield & RMSE Option Price & RMSE Option Vol  \\
+\midrule
+\endfirsthead
+\multicolumn{6}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\toprule
+Date & Tenor & RMSE OIS Price & RMSE OIS Yield & RMSE Option Price & RMSE Option Vol \\
+\midrule
+\endhead
+\midrule \multicolumn{6}{r}{{Continued on next page}} \\ \midrule
+\endfoot
+\bottomrule
+\endlastfoot
+03/14/2025 & 1Y & 30.35 & 40.78 & 12.28 & 58.01  \\
+03/14/2025 & 2Y & 30.35 & 40.78 & 6.58 & 20.87  \\
+03/14/2025 & 3Y & 30.35 & 40.78 & 9.99 & 28.71  \\
+03/14/2025 & 4Y & 30.35 & 40.78 & 12.59 & 32.69  \\
+03/14/2025 & 5Y & 30.35 & 40.78 & 17.26 & 24.96  \\
+03/14/2025 & 7Y & 30.35 & 40.78 & 24.91 & 48.47  \\
+03/14/2025 & 10Y & 30.35 & 40.78 & 74.23 & 109.35  \\
+03/14/2025 & 3Y-7Y & 30.35 & 40.78 & 94.66 & 151.57  \\
+04/01/2025 & 1Y & 34.13 & 48.46 & 12.48 & 56.25  \\
+04/01/2025 & 2Y & 34.13 & 48.46 & 4.61 & 14.29  \\
+04/01/2025 & 3Y & 34.13 & 48.46 & 8.81 & 24.87  \\
+04/01/2025 & 4Y & 34.13 & 48.46 & 11.82 & 25.42  \\
+04/01/2025 & 5Y & 34.13 & 48.46 & 15.84 & 24.55  \\
+04/01/2025 & 7Y & 34.13 & 48.46 & 15.61 & 30.87  \\
+04/01/2025 & 10Y & 34.13 & 48.46 & 64.16 & 95.24  \\
+04/01/2025 & 3Y-7Y & 34.13 & 48.46 & 88.66 & 136.22  \\
+04/15/2025 & 1Y & 41.97 & 62.02 & 5.82 & 25.63  \\
+04/15/2025 & 2Y & 41.97 & 62.02 & 9.46 & 27.48  \\
+04/15/2025 & 3Y & 41.97 & 62.02 & 145.91 & 226.78  \\
+04/15/2025 & 4Y & 41.97 & 62.02 & 22.47 & 34.84  \\
+04/15/2025 & 5Y & 41.97 & 62.02 & 23.07 & 43.99  \\
+04/15/2025 & 7Y & 41.97 & 62.02 & 256.48 & 263.89  \\
+04/15/2025 & 10Y & 41.97 & 62.02 & 344.29 & 329.32  \\
+04/15/2025 & 3Y-7Y & 41.97 & 62.02 & 205.23 & 260.46  \\
+05/16/2025 & 1Y & 41.86 & 54.60 & 9.18 & 26.64  \\
+05/16/2025 & 2Y & 41.86 & 54.60 & 31.32 & 86.64  \\
+05/16/2025 & 3Y & 41.86 & 54.60 & 35.73 & 73.77  \\
+05/16/2025 & 4Y & 41.86 & 54.60 & 6.79 & 13.31  \\
+05/16/2025 & 5Y & 41.86 & 54.60 & 66.56 & 109.06  \\
+05/16/2025 & 7Y & 41.86 & 54.60 & 82.03 & 128.37  \\
+05/16/2025 & 10Y & 41.86 & 54.60 & 111.96 & 145.20  \\
+05/16/2025 & 3Y-7Y & 41.86 & 54.60 & 92.30 & 131.36  \\
+05/30/2025 & 1Y & 46.81 & 61.53 & 9.50 & 18.92  \\
+05/30/2025 & 2Y & 46.81 & 61.53 & 8.17 & 6.84  \\
+05/30/2025 & 3Y & 46.81 & 61.53 & 57.49 & 117.08  \\
+05/30/2025 & 4Y & 46.81 & 61.53 & 74.08 & 128.15  \\
+05/30/2025 & 5Y & 46.81 & 61.53 & 7.89 & 13.81  \\
+05/30/2025 & 7Y & 46.81 & 61.53 & 130.72 & 188.18  \\
+05/30/2025 & 10Y & 46.81 & 61.53 & 123.79 & 138.86  \\
+05/30/2025 & 3Y-7Y & 46.81 & 61.53 & 98.26 & 140.01  \\
+
+\end{longtable}
+\end{landscape}
+
+
+\begin{landscape}
+\begin{longtable}{lccccccc}
+\caption{Calibration Quality Metrics by Date and Tenor} \\
+\toprule
+%Date & Tenor & RMSE OIS Price & RMSE OIS Yield & RMSE Option Price & RMSE Option Vol & FX Spot & $\alpha_i$ \\
+Date & FX Spot & $alpha_i$ & $alpha_j$ & ${x_0}_{11}$ & ${x_0}_{22}$ & $\omega_{11}$ & $\omega_{22}$ & $m_{11}$ & $m_{22}$  \\
+
+\midrule
+\endfirsthead
+\multicolumn{10}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\toprule
+%Date & Tenor & RMSE OIS Price & RMSE OIS Yield & RMSE Option Price & RMSE Option Vol & FX Spot & $\alpha_i$ \\
+Date & FX Spot & $alpha_i$ & $alpha_j$ & ${x_0}_{11}$ & ${x_0}_{22}$ & $\omega_{11}$ & $\omega_{22}$ & $m_{11}$ & $m_{22}$  \\
+\midrule
+\endhead
+\midrule \multicolumn{10}{r}{{Continued on next page}} \\ \midrule
+\endfoot
+\bottomrule
+\endlastfoot
+03/14/2025& 1.08800 & 0.039593 & 0.028338 & 0.199392 & 0.054721 & 0.033431 & 0.045622 & -0.076556 & -0.280272   \\
+04/01/2025& 1.07875 & 0.038260 & 0.026502 & 0.205832 & 0.053567 & 0.030540 & 0.040193 & -0.065827 & -0.245932   \\
+04/15/2025& 1.12730 & 0.040107 & 0.025612 & 0.017524 & 0.012915 & 0.010914 & 0.023815 & -0.119239 & -0.293287   \\
+05/16/2025& 1.11525 & 0.041060 & 0.026136 & 0.095029 & 0.002022 & 0.025684 & 0.016454 & -0.101037 & -0.253732   \\
+05/30/2025& 1.13590 & 0.041177 & 0.026113 & 0.070030 & 0.002481 & 0.022693 & 0.017231 & -0.105884 & -0.242980   \\
+
+\end{longtable}
+\end{landscape}
+
+\section{Model Parameters by Calibration Date and Tenor}
+
+
+\subsection{March 14, 2025}
+
+
+\subsubsection{Tenor: 1Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 1Y \\
+FX Spot Rate & 1.08800 \\
+$\alpha_i$ & 0.039593 \\
+$\alpha_j$ & 0.028338 \\
+RMSE OIS Price & 30.35 \\
+RMSE OIS Yield & 40.78 \\
+RMSE Option Price & 12.28 \\
+RMSE Option Vol & 58.01 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for March 14, 2025 - 1Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.1994 & 0.0313 \\
+0.0313 & 0.0547
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0334 & 0.0138 \\
+0.0138 & 0.0456
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0766 & 0.0000 \\
+0.0000 & -0.2803
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.0481 & 0.0296 \\
+0.0296 & 0.1046
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 2Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 2Y \\
+FX Spot Rate & 1.08800 \\
+$\alpha_i$ & 0.039593 \\
+$\alpha_j$ & 0.028338 \\
+RMSE OIS Price & 30.35 \\
+RMSE OIS Yield & 40.78 \\
+RMSE Option Price & 6.58 \\
+RMSE Option Vol & 20.87 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for March 14, 2025 - 2Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.1994 & 0.0074 \\
+0.0074 & 0.0547
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0334 & 0.0074 \\
+0.0074 & 0.0456
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0766 & 0.0000 \\
+0.0000 & -0.2803
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.0867 & 0.0078 \\
+0.0078 & 0.1559
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y \\
+FX Spot Rate & 1.08800 \\
+$\alpha_i$ & 0.039593 \\
+$\alpha_j$ & 0.028338 \\
+RMSE OIS Price & 30.35 \\
+RMSE OIS Yield & 40.78 \\
+RMSE Option Price & 9.99 \\
+RMSE Option Vol & 28.71 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for March 14, 2025 - 3Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.1994 & 0.0137 \\
+0.0137 & 0.0547
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0334 & 0.0105 \\
+0.0105 & 0.0456
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0766 & 0.0000 \\
+0.0000 & -0.2803
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1155 & 0.0027 \\
+0.0027 & 0.2095
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 4Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 4Y \\
+FX Spot Rate & 1.08800 \\
+$\alpha_i$ & 0.039593 \\
+$\alpha_j$ & 0.028338 \\
+RMSE OIS Price & 30.35 \\
+RMSE OIS Yield & 40.78 \\
+RMSE Option Price & 12.59 \\
+RMSE Option Vol & 32.69 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for March 14, 2025 - 4Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.1994 & 0.0206 \\
+0.0206 & 0.0547
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0334 & 0.0128 \\
+0.0128 & 0.0456
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0766 & 0.0000 \\
+0.0000 & -0.2803
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1426 & 0.0303 \\
+0.0303 & 0.2880
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 5Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 5Y \\
+FX Spot Rate & 1.08800 \\
+$\alpha_i$ & 0.039593 \\
+$\alpha_j$ & 0.028338 \\
+RMSE OIS Price & 30.35 \\
+RMSE OIS Yield & 40.78 \\
+RMSE Option Price & 17.26 \\
+RMSE Option Vol & 24.96 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for March 14, 2025 - 5Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.1994 & 0.0126 \\
+0.0126 & 0.0547
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0334 & 0.0112 \\
+0.0112 & 0.0456
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0766 & 0.0000 \\
+0.0000 & -0.2803
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1719 & 0.0299 \\
+0.0299 & 0.3156
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 7Y \\
+FX Spot Rate & 1.08800 \\
+$\alpha_i$ & 0.039593 \\
+$\alpha_j$ & 0.028338 \\
+RMSE OIS Price & 30.35 \\
+RMSE OIS Yield & 40.78 \\
+RMSE Option Price & 24.91 \\
+RMSE Option Vol & 48.47 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for March 14, 2025 - 7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.1994 & -0.0013 \\
+-0.0013 & 0.0547
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0334 & 0.0039 \\
+0.0039 & 0.0456
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0766 & 0.0000 \\
+0.0000 & -0.2803
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1969 & 0.0723 \\
+0.0723 & 0.3957
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 10Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 10Y \\
+FX Spot Rate & 1.08800 \\
+$\alpha_i$ & 0.039593 \\
+$\alpha_j$ & 0.028338 \\
+RMSE OIS Price & 30.35 \\
+RMSE OIS Yield & 40.78 \\
+RMSE Option Price & 74.23 \\
+RMSE Option Vol & 109.35 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for March 14, 2025 - 10Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.1994 & 0.0038 \\
+0.0038 & 0.0547
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0334 & 0.0138 \\
+0.0138 & 0.0456
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0766 & 0.0000 \\
+0.0000 & -0.2803
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2836 & 0.0117 \\
+0.0117 & 0.8777
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y-7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y-7Y \\
+FX Spot Rate & 1.08800 \\
+$\alpha_i$ & 0.039593 \\
+$\alpha_j$ & 0.028338 \\
+RMSE OIS Price & 30.35 \\
+RMSE OIS Yield & 40.78 \\
+RMSE Option Price & 94.66 \\
+RMSE Option Vol & 151.57 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for March 14, 2025 - 3Y-7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.1994 & 0.0162 \\
+0.0162 & 0.0547
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0334 & 0.0128 \\
+0.0128 & 0.0456
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0766 & 0.0000 \\
+0.0000 & -0.2803
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1577 & 0.0066 \\
+0.0066 & 0.2191
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsection{April 01, 2025}
+
+
+\subsubsection{Tenor: 1Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 1Y \\
+FX Spot Rate & 1.07875 \\
+$\alpha_i$ & 0.038260 \\
+$\alpha_j$ & 0.026502 \\
+RMSE OIS Price & 34.13 \\
+RMSE OIS Yield & 48.46 \\
+RMSE Option Price & 12.48 \\
+RMSE Option Vol & 56.25 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 01, 2025 - 1Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.2058 & 0.0327 \\
+0.0327 & 0.0536
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0305 & 0.0128 \\
+0.0128 & 0.0402
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0658 & 0.0000 \\
+0.0000 & -0.2459
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.0435 & 0.0275 \\
+0.0275 & 0.1125
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 2Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 2Y \\
+FX Spot Rate & 1.07875 \\
+$\alpha_i$ & 0.038260 \\
+$\alpha_j$ & 0.026502 \\
+RMSE OIS Price & 34.13 \\
+RMSE OIS Yield & 48.46 \\
+RMSE Option Price & 4.61 \\
+RMSE Option Vol & 14.29 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 01, 2025 - 2Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.2058 & 0.0237 \\
+0.0237 & 0.0536
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0305 & 0.0112 \\
+0.0112 & 0.0402
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0658 & 0.0000 \\
+0.0000 & -0.2459
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.0789 & 0.0151 \\
+0.0151 & 0.1699
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y \\
+FX Spot Rate & 1.07875 \\
+$\alpha_i$ & 0.038260 \\
+$\alpha_j$ & 0.026502 \\
+RMSE OIS Price & 34.13 \\
+RMSE OIS Yield & 48.46 \\
+RMSE Option Price & 8.81 \\
+RMSE Option Vol & 24.87 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 01, 2025 - 3Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.2058 & 0.0093 \\
+0.0093 & 0.0536
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0305 & 0.0107 \\
+0.0107 & 0.0402
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0658 & 0.0000 \\
+0.0000 & -0.2459
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1068 & 0.0004 \\
+0.0004 & 0.2123
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 4Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 4Y \\
+FX Spot Rate & 1.07875 \\
+$\alpha_i$ & 0.038260 \\
+$\alpha_j$ & 0.026502 \\
+RMSE OIS Price & 34.13 \\
+RMSE OIS Yield & 48.46 \\
+RMSE Option Price & 11.82 \\
+RMSE Option Vol & 25.42 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 01, 2025 - 4Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.2058 & 0.0198 \\
+0.0198 & 0.0536
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0305 & 0.0107 \\
+0.0107 & 0.0402
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0658 & 0.0000 \\
+0.0000 & -0.2459
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1341 & 0.0249 \\
+0.0249 & 0.2791
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 5Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 5Y \\
+FX Spot Rate & 1.07875 \\
+$\alpha_i$ & 0.038260 \\
+$\alpha_j$ & 0.026502 \\
+RMSE OIS Price & 34.13 \\
+RMSE OIS Yield & 48.46 \\
+RMSE Option Price & 15.84 \\
+RMSE Option Vol & 24.55 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 01, 2025 - 5Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.2058 & 0.0121 \\
+0.0121 & 0.0536
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0305 & 0.0097 \\
+0.0097 & 0.0402
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0658 & 0.0000 \\
+0.0000 & -0.2459
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1588 & 0.0358 \\
+0.0358 & 0.3118
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 7Y \\
+FX Spot Rate & 1.07875 \\
+$\alpha_i$ & 0.038260 \\
+$\alpha_j$ & 0.026502 \\
+RMSE OIS Price & 34.13 \\
+RMSE OIS Yield & 48.46 \\
+RMSE Option Price & 15.61 \\
+RMSE Option Vol & 30.87 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 01, 2025 - 7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.2058 & 0.0025 \\
+0.0025 & 0.0536
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0305 & 0.0085 \\
+0.0085 & 0.0402
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0658 & 0.0000 \\
+0.0000 & -0.2459
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1824 & 0.0900 \\
+0.0900 & 0.3353
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 10Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 10Y \\
+FX Spot Rate & 1.07875 \\
+$\alpha_i$ & 0.038260 \\
+$\alpha_j$ & 0.026502 \\
+RMSE OIS Price & 34.13 \\
+RMSE OIS Yield & 48.46 \\
+RMSE Option Price & 64.16 \\
+RMSE Option Vol & 95.24 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 01, 2025 - 10Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.2058 & 0.0038 \\
+0.0038 & 0.0536
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0305 & 0.0115 \\
+0.0115 & 0.0402
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0658 & 0.0000 \\
+0.0000 & -0.2459
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2525 & -0.0138 \\
+-0.0138 & 0.7388
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y-7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y-7Y \\
+FX Spot Rate & 1.07875 \\
+$\alpha_i$ & 0.038260 \\
+$\alpha_j$ & 0.026502 \\
+RMSE OIS Price & 34.13 \\
+RMSE OIS Yield & 48.46 \\
+RMSE Option Price & 88.66 \\
+RMSE Option Vol & 136.22 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 01, 2025 - 3Y-7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.2058 & 0.0602 \\
+0.0602 & 0.0536
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0305 & 0.0259 \\
+0.0259 & 0.0402
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0658 & 0.0000 \\
+0.0000 & -0.2459
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1504 & 0.0790 \\
+0.0790 & 0.3490
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsection{April 15, 2025}
+
+
+\subsubsection{Tenor: 1Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 1Y \\
+FX Spot Rate & 1.12730 \\
+$\alpha_i$ & 0.040107 \\
+$\alpha_j$ & 0.025612 \\
+RMSE OIS Price & 41.97 \\
+RMSE OIS Yield & 62.02 \\
+RMSE Option Price & 5.82 \\
+RMSE Option Vol & 25.63 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 15, 2025 - 1Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0175 & 0.0051 \\
+0.0051 & 0.0129
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0109 & 0.0087 \\
+0.0087 & 0.0238
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1192 & 0.0000 \\
+0.0000 & -0.2933
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1106 & -0.0639 \\
+-0.0639 & 0.1679
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 2Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 2Y \\
+FX Spot Rate & 1.12730 \\
+$\alpha_i$ & 0.040107 \\
+$\alpha_j$ & 0.025612 \\
+RMSE OIS Price & 41.97 \\
+RMSE OIS Yield & 62.02 \\
+RMSE Option Price & 9.46 \\
+RMSE Option Vol & 27.48 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 15, 2025 - 2Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0175 & -0.0034 \\
+-0.0034 & 0.0129
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0109 & -0.0055 \\
+-0.0055 & 0.0238
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1192 & 0.0000 \\
+0.0000 & -0.2933
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1812 & 0.1226 \\
+0.1226 & 0.2464
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y \\
+FX Spot Rate & 1.12730 \\
+$\alpha_i$ & 0.040107 \\
+$\alpha_j$ & 0.025612 \\
+RMSE OIS Price & 41.97 \\
+RMSE OIS Yield & 62.02 \\
+RMSE Option Price & 145.91 \\
+RMSE Option Vol & 226.78 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 15, 2025 - 3Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0175 & 0.0004 \\
+0.0004 & 0.0129
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0109 & 0.0040 \\
+0.0040 & 0.0238
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1192 & 0.0000 \\
+0.0000 & -0.2933
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.6385 & 0.1086 \\
+0.1086 & 0.6385
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 4Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 4Y \\
+FX Spot Rate & 1.12730 \\
+$\alpha_i$ & 0.040107 \\
+$\alpha_j$ & 0.025612 \\
+RMSE OIS Price & 41.97 \\
+RMSE OIS Yield & 62.02 \\
+RMSE Option Price & 22.47 \\
+RMSE Option Vol & 34.84 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 15, 2025 - 4Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0175 & -0.0044 \\
+-0.0044 & 0.0129
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0109 & -0.0070 \\
+-0.0070 & 0.0238
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1192 & 0.0000 \\
+0.0000 & -0.2933
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2862 & 0.2020 \\
+0.2020 & 0.3747
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 5Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 5Y \\
+FX Spot Rate & 1.12730 \\
+$\alpha_i$ & 0.040107 \\
+$\alpha_j$ & 0.025612 \\
+RMSE OIS Price & 41.97 \\
+RMSE OIS Yield & 62.02 \\
+RMSE Option Price & 23.07 \\
+RMSE Option Vol & 43.99 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 15, 2025 - 5Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0175 & 0.0015 \\
+0.0015 & 0.0129
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0109 & -0.0086 \\
+-0.0086 & 0.0238
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1192 & 0.0000 \\
+0.0000 & -0.2933
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.3206 & 0.2365 \\
+0.2365 & 0.4145
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 7Y \\
+FX Spot Rate & 1.12730 \\
+$\alpha_i$ & 0.040107 \\
+$\alpha_j$ & 0.025612 \\
+RMSE OIS Price & 41.97 \\
+RMSE OIS Yield & 62.02 \\
+RMSE Option Price & 256.48 \\
+RMSE Option Vol & 263.89 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 15, 2025 - 7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0175 & -0.0000 \\
+-0.0000 & 0.0129
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0109 & -0.0017 \\
+-0.0017 & 0.0238
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1192 & 0.0000 \\
+0.0000 & -0.2933
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+1.3985 & 0.4092 \\
+0.4092 & 0.9788
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 10Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 10Y \\
+FX Spot Rate & 1.12730 \\
+$\alpha_i$ & 0.040107 \\
+$\alpha_j$ & 0.025612 \\
+RMSE OIS Price & 41.97 \\
+RMSE OIS Yield & 62.02 \\
+RMSE Option Price & 344.29 \\
+RMSE Option Vol & 329.32 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 15, 2025 - 10Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0175 & -0.0000 \\
+-0.0000 & 0.0129
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0109 & -0.0038 \\
+-0.0038 & 0.0238
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1192 & 0.0000 \\
+0.0000 & -0.2933
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+1.4525 & 0.7136 \\
+0.7136 & 1.3065
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y-7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y-7Y \\
+FX Spot Rate & 1.12730 \\
+$\alpha_i$ & 0.040107 \\
+$\alpha_j$ & 0.025612 \\
+RMSE OIS Price & 41.97 \\
+RMSE OIS Yield & 62.02 \\
+RMSE Option Price & 205.23 \\
+RMSE Option Vol & 260.46 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for April 15, 2025 - 3Y-7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0175 & 0.0002 \\
+0.0002 & 0.0129
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0109 & 0.0008 \\
+0.0008 & 0.0238
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1192 & 0.0000 \\
+0.0000 & -0.2933
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.8675 & 0.2498 \\
+0.2498 & 0.8204
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsection{May 16, 2025}
+
+
+\subsubsection{Tenor: 1Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 1Y \\
+FX Spot Rate & 1.11525 \\
+$\alpha_i$ & 0.041060 \\
+$\alpha_j$ & 0.026136 \\
+RMSE OIS Price & 41.86 \\
+RMSE OIS Yield & 54.60 \\
+RMSE Option Price & 9.18 \\
+RMSE Option Vol & 26.64 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 16, 2025 - 1Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0950 & 0.0016 \\
+0.0016 & 0.0020
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0257 & 0.0071 \\
+0.0071 & 0.0165
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1010 & 0.0000 \\
+0.0000 & -0.2537
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.0594 & -0.0421 \\
+-0.0421 & 0.1374
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 2Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 2Y \\
+FX Spot Rate & 1.11525 \\
+$\alpha_i$ & 0.041060 \\
+$\alpha_j$ & 0.026136 \\
+RMSE OIS Price & 41.86 \\
+RMSE OIS Yield & 54.60 \\
+RMSE Option Price & 31.32 \\
+RMSE Option Vol & 86.64 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 16, 2025 - 2Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0950 & 0.0049 \\
+0.0049 & 0.0020
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0257 & 0.0090 \\
+0.0090 & 0.0165
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1010 & 0.0000 \\
+0.0000 & -0.2537
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1216 & 0.0245 \\
+0.0245 & 0.4721
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y \\
+FX Spot Rate & 1.11525 \\
+$\alpha_i$ & 0.041060 \\
+$\alpha_j$ & 0.026136 \\
+RMSE OIS Price & 41.86 \\
+RMSE OIS Yield & 54.60 \\
+RMSE Option Price & 35.73 \\
+RMSE Option Vol & 73.77 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 16, 2025 - 3Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0950 & 0.0025 \\
+0.0025 & 0.0020
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0257 & 0.0060 \\
+0.0060 & 0.0165
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1010 & 0.0000 \\
+0.0000 & -0.2537
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1586 & -0.0416 \\
+-0.0416 & 0.4342
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 4Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 4Y \\
+FX Spot Rate & 1.11525 \\
+$\alpha_i$ & 0.041060 \\
+$\alpha_j$ & 0.026136 \\
+RMSE OIS Price & 41.86 \\
+RMSE OIS Yield & 54.60 \\
+RMSE Option Price & 6.79 \\
+RMSE Option Vol & 13.31 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 16, 2025 - 4Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0950 & -0.0025 \\
+-0.0025 & 0.0020
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0257 & -0.0029 \\
+-0.0029 & 0.0165
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1010 & 0.0000 \\
+0.0000 & -0.2537
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1742 & 0.1141 \\
+0.1141 & 0.2679
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 5Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 5Y \\
+FX Spot Rate & 1.11525 \\
+$\alpha_i$ & 0.041060 \\
+$\alpha_j$ & 0.026136 \\
+RMSE OIS Price & 41.86 \\
+RMSE OIS Yield & 54.60 \\
+RMSE Option Price & 66.56 \\
+RMSE Option Vol & 109.06 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 16, 2025 - 5Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0950 & 0.0003 \\
+0.0003 & 0.0020
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0257 & 0.0031 \\
+0.0031 & 0.0165
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1010 & 0.0000 \\
+0.0000 & -0.2537
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2586 & 0.1128 \\
+0.1128 & 0.6462
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 7Y \\
+FX Spot Rate & 1.11525 \\
+$\alpha_i$ & 0.041060 \\
+$\alpha_j$ & 0.026136 \\
+RMSE OIS Price & 41.86 \\
+RMSE OIS Yield & 54.60 \\
+RMSE Option Price & 82.03 \\
+RMSE Option Vol & 128.37 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 16, 2025 - 7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0950 & -0.0007 \\
+-0.0007 & 0.0020
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0257 & -0.0077 \\
+-0.0077 & 0.0165
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1010 & 0.0000 \\
+0.0000 & -0.2537
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.5107 & 0.2755 \\
+0.2755 & 1.0101
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 10Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 10Y \\
+FX Spot Rate & 1.11525 \\
+$\alpha_i$ & 0.041060 \\
+$\alpha_j$ & 0.026136 \\
+RMSE OIS Price & 41.86 \\
+RMSE OIS Yield & 54.60 \\
+RMSE Option Price & 111.96 \\
+RMSE Option Vol & 145.20 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 16, 2025 - 10Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0950 & 0.0001 \\
+0.0001 & 0.0020
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0257 & -0.0004 \\
+-0.0004 & 0.0165
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1010 & 0.0000 \\
+0.0000 & -0.2537
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.7004 & 0.3616 \\
+0.3616 & 0.9896
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y-7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y-7Y \\
+FX Spot Rate & 1.11525 \\
+$\alpha_i$ & 0.041060 \\
+$\alpha_j$ & 0.026136 \\
+RMSE OIS Price & 41.86 \\
+RMSE OIS Yield & 54.60 \\
+RMSE Option Price & 92.30 \\
+RMSE Option Vol & 131.36 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 16, 2025 - 3Y-7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0950 & -0.0002 \\
+-0.0002 & 0.0020
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0257 & 0.0024 \\
+0.0024 & 0.0165
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1010 & 0.0000 \\
+0.0000 & -0.2537
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2066 & 0.1148 \\
+0.1148 & 0.3435
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsection{May 30, 2025}
+
+
+\subsubsection{Tenor: 1Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 1Y \\
+FX Spot Rate & 1.13590 \\
+$\alpha_i$ & 0.041177 \\
+$\alpha_j$ & 0.026113 \\
+RMSE OIS Price & 46.81 \\
+RMSE OIS Yield & 61.53 \\
+RMSE Option Price & 9.50 \\
+RMSE Option Vol & 18.92 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 30, 2025 - 1Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0700 & 0.0008 \\
+0.0008 & 0.0025
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0227 & 0.0056 \\
+0.0056 & 0.0172
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1059 & 0.0000 \\
+0.0000 & -0.2430
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.0717 & -0.0471 \\
+-0.0471 & 0.1391
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 2Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 2Y \\
+FX Spot Rate & 1.13590 \\
+$\alpha_i$ & 0.041177 \\
+$\alpha_j$ & 0.026113 \\
+RMSE OIS Price & 46.81 \\
+RMSE OIS Yield & 61.53 \\
+RMSE Option Price & 8.17 \\
+RMSE Option Vol & 6.84 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 30, 2025 - 2Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0700 & 0.0069 \\
+0.0069 & 0.0025
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0227 & 0.0075 \\
+0.0075 & 0.0172
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1059 & 0.0000 \\
+0.0000 & -0.2430
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1180 & -0.0669 \\
+-0.0669 & 0.1910
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y \\
+FX Spot Rate & 1.13590 \\
+$\alpha_i$ & 0.041177 \\
+$\alpha_j$ & 0.026113 \\
+RMSE OIS Price & 46.81 \\
+RMSE OIS Yield & 61.53 \\
+RMSE Option Price & 57.49 \\
+RMSE Option Vol & 117.08 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 30, 2025 - 3Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0700 & 0.0021 \\
+0.0021 & 0.0025
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0227 & 0.0054 \\
+0.0054 & 0.0172
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1059 & 0.0000 \\
+0.0000 & -0.2430
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2030 & 0.0623 \\
+0.0623 & 0.6149
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 4Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 4Y \\
+FX Spot Rate & 1.13590 \\
+$\alpha_i$ & 0.041177 \\
+$\alpha_j$ & 0.026113 \\
+RMSE OIS Price & 46.81 \\
+RMSE OIS Yield & 61.53 \\
+RMSE Option Price & 74.08 \\
+RMSE Option Vol & 128.15 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 30, 2025 - 4Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0700 & 0.0003 \\
+0.0003 & 0.0025
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0227 & 0.0044 \\
+0.0044 & 0.0172
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1059 & 0.0000 \\
+0.0000 & -0.2430
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2712 & 0.0889 \\
+0.0889 & 0.6198
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 5Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 5Y \\
+FX Spot Rate & 1.13590 \\
+$\alpha_i$ & 0.041177 \\
+$\alpha_j$ & 0.026113 \\
+RMSE OIS Price & 46.81 \\
+RMSE OIS Yield & 61.53 \\
+RMSE Option Price & 7.89 \\
+RMSE Option Vol & 13.81 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 30, 2025 - 5Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0700 & -0.0023 \\
+-0.0023 & 0.0025
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0227 & -0.0057 \\
+-0.0057 & 0.0172
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1059 & 0.0000 \\
+0.0000 & -0.2430
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2205 & 0.1465 \\
+0.1465 & 0.2985
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 7Y \\
+FX Spot Rate & 1.13590 \\
+$\alpha_i$ & 0.041177 \\
+$\alpha_j$ & 0.026113 \\
+RMSE OIS Price & 46.81 \\
+RMSE OIS Yield & 61.53 \\
+RMSE Option Price & 130.72 \\
+RMSE Option Vol & 188.18 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 30, 2025 - 7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0700 & 0.0002 \\
+0.0002 & 0.0025
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0227 & -0.0003 \\
+-0.0003 & 0.0172
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1059 & 0.0000 \\
+0.0000 & -0.2430
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.9286 & 0.3927 \\
+0.3927 & 1.0361
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 10Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 10Y \\
+FX Spot Rate & 1.13590 \\
+$\alpha_i$ & 0.041177 \\
+$\alpha_j$ & 0.026113 \\
+RMSE OIS Price & 46.81 \\
+RMSE OIS Yield & 61.53 \\
+RMSE Option Price & 123.79 \\
+RMSE Option Vol & 138.86 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 30, 2025 - 10Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0700 & 0.0002 \\
+0.0002 & 0.0025
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0227 & -0.0050 \\
+-0.0050 & 0.0172
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1059 & 0.0000 \\
+0.0000 & -0.2430
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+1.4473 & 0.8153 \\
+0.8153 & 1.3912
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\subsubsection{Tenor: 3Y-7Y}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Option Tenor & 3Y-7Y \\
+FX Spot Rate & 1.13590 \\
+$\alpha_i$ & 0.041177 \\
+$\alpha_j$ & 0.026113 \\
+RMSE OIS Price & 46.81 \\
+RMSE OIS Yield & 61.53 \\
+RMSE Option Price & 98.26 \\
+RMSE Option Vol & 140.01 \\
+\bottomrule
+\end{tabular}
+\caption{Parameters for May 30, 2025 - 3Y-7Y}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.0700 & -0.0012 \\
+-0.0012 & 0.0025
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0227 & -0.0033 \\
+-0.0033 & 0.0172
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.1059 & 0.0000 \\
+0.0000 & -0.2430
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.2161 & 0.1243 \\
+0.1243 & 0.2930
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\vspace{0.5cm}
+
+
+\section{Parameter Evolution Analysis}
+
+\subsection{FX Spot Rate Evolution}
+
+\subsubsection{Key Parameters Evolution - 1Y Tenor}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcccccc}
+\toprule
+Date & FX Spot & $\alpha_i$ & $\alpha_j$ & $\sigma_{11}$ & $\sigma_{22}$ & Option RMSE \\
+\midrule
+03/14/2025 & 1.08800 & 0.03959 & 0.02834 & 0.0481 & 0.1046 & 58.01 \\
+04/01/2025 & 1.07875 & 0.03826 & 0.02650 & 0.0435 & 0.1125 & 56.25 \\
+04/15/2025 & 1.12730 & 0.04011 & 0.02561 & 0.1106 & 0.1679 & 25.63 \\
+05/16/2025 & 1.11525 & 0.04106 & 0.02614 & 0.0594 & 0.1374 & 26.64 \\
+05/30/2025 & 1.13590 & 0.04118 & 0.02611 & 0.0717 & 0.1391 & 18.92 \\
+\bottomrule
+\end{tabular}
+\caption{Parameter Evolution for 1Y Tenor}
+\end{table}
+
+
+\subsubsection{Key Parameters Evolution - 4Y Tenor}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcccccc}
+\toprule
+Date & FX Spot & $\alpha_i$ & $\alpha_j$ & $\sigma_{11}$ & $\sigma_{22}$ & Option RMSE \\
+\midrule
+03/14/2025 & 1.08800 & 0.03959 & 0.02834 & 0.1426 & 0.2880 & 32.69 \\
+04/01/2025 & 1.07875 & 0.03826 & 0.02650 & 0.1341 & 0.2791 & 25.42 \\
+04/15/2025 & 1.12730 & 0.04011 & 0.02561 & 0.2862 & 0.3747 & 34.84 \\
+05/16/2025 & 1.11525 & 0.04106 & 0.02614 & 0.1742 & 0.2679 & 13.31 \\
+05/30/2025 & 1.13590 & 0.04118 & 0.02611 & 0.2712 & 0.6198 & 128.15 \\
+\bottomrule
+\end{tabular}
+\caption{Parameter Evolution for 4Y Tenor}
+\end{table}
+
+
+\subsubsection{Key Parameters Evolution - 10Y Tenor}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcccccc}
+\toprule
+Date & FX Spot & $\alpha_i$ & $\alpha_j$ & $\sigma_{11}$ & $\sigma_{22}$ & Option RMSE \\
+\midrule
+03/14/2025 & 1.08800 & 0.03959 & 0.02834 & 0.2836 & 0.8777 & 109.35 \\
+04/01/2025 & 1.07875 & 0.03826 & 0.02650 & 0.2525 & 0.7388 & 95.24 \\
+04/15/2025 & 1.12730 & 0.04011 & 0.02561 & 1.4525 & 1.3065 & 329.32 \\
+05/16/2025 & 1.11525 & 0.04106 & 0.02614 & 0.7004 & 0.9896 & 145.20 \\
+05/30/2025 & 1.13590 & 0.04118 & 0.02611 & 1.4473 & 1.3912 & 138.86 \\
+\bottomrule
+\end{tabular}
+\caption{Parameter Evolution for 10Y Tenor}
+\end{table}
+
+
+\section{Cross-Tenor Analysis}
+
+\subsection{Calibration Quality by Tenor}
+
+The following analysis compares calibration quality across different option tenors:
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Tenor & Avg RMSE OIS Price & Avg RMSE OIS Yield & Avg RMSE Option Price & Avg RMSE Option Vol \\
+\midrule
+1Y & 39.02 & 53.48 & 9.85 & 37.09 \\
+2Y & 39.02 & 53.48 & 12.03 & 31.22 \\
+3Y & 39.02 & 53.48 & 51.58 & 94.24 \\
+4Y & 39.02 & 53.48 & 25.55 & 46.88 \\
+5Y & 39.02 & 53.48 & 26.12 & 43.27 \\
+7Y & 39.02 & 53.48 & 101.95 & 131.95 \\
+10Y & 39.02 & 53.48 & 143.69 & 163.59 \\
+3Y-7Y & 39.02 & 53.48 & 115.82 & 163.92 \\
+
+\bottomrule
+\end{tabular}
+\caption{Average Calibration Quality Metrics by Tenor}
+\end{table}
+
+\section{Calibration Charts}
+
+Charts showing the calibration results are organized by date and tenor. Each calibration includes:
+\begin{itemize}
+\item Domestic and foreign yield curve fits
+\item Zero coupon bond price comparisons
+\item FX implied volatility surface calibration
+\end{itemize}
+
+Note: Chart file naming convention follows the pattern:
+\begin{itemize}
+\item Domestic curves: \texttt{Domestic\_bonds\_[zcrate/price]\_[YYYYMMDD].png}
+\item Foreign curves: \texttt{Foreign\_bonds\_[zcrate/price]\_[YYYYMMDD].png}
+\item FX volatility: \texttt{fx\_option\_vol\_maturity\_[tenor]\_[YYYYMMDD].png}
+\end{itemize}
+
+\section{Key Findings and Conclusions}
+
+\subsection{Model Performance}
+\begin{itemize}
+\item The LRW model demonstrates varying calibration quality across different option tenors
+\item Shorter tenor options (1Y-2Y) generally show better volatility fits
+\item Longer tenor options (7Y-10Y) exhibit higher calibration errors, suggesting potential model limitations for long-term volatility structures
+\item FX spot rates show realistic market movements across the calibration period
+\end{itemize}
+
+\subsection{Parameter Stability}
+\begin{itemize}
+\item $\alpha$ parameters show tenor-dependent behavior
+\item Volatility matrix ($\sigma$) parameters adapt significantly to different tenor requirements
+\item Mean reversion parameters remain relatively stable across tenors
+\item Cross-correlation structures vary with option maturity
+\end{itemize}
+
+\subsection{Recommendations}
+\begin{itemize}
+\item Focus on 1Y-5Y tenors for optimal model performance
+\item Consider tenor-specific parameter constraints for better stability
+\item Investigate alternative volatility specifications for long-term options
+\item Monitor parameter evolution over time for early warning of model degradation
+\end{itemize}
+
+\end{document}

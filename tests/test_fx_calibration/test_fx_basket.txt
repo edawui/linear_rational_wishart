@@ -1,0 +1,347 @@
+"""
+Tests for FX basket options.
+
+This module tests the basket option functionality including
+pricing and Greeks calculations for currency baskets.
+"""
+
+import numpy as np
+import pytest
+from numpy.testing import assert_almost_equal
+
+from wishart_processes.models.fx import LrwFx, LrwCurrencyBasket
+
+
+class TestFxBasketOptions:
+    """Test FX basket option functionality."""
+    
+    @pytest.fixture
+    def single_fx_model(self):
+        """Create single FX model for basket testing."""
+        n = 2
+        
+        x0 = np.array([[4.99996419e+00, -3.18397238e-04],
+                       [-3.18397238e-04, 4.88302000e-04]])
+        
+        omega = np.array([[2.09114424e+00, -8.04612684e-04],
+                          [-8.04612684e-04, 1.92477100e-03]])
+        
+        m = np.array([[-0.20583617, 0.0],
+                      [0.0, -0.02069993]])
+        
+        sigma = np.array([[0.15871937, 0.10552826],
+                          [0.10552826, 0.02298161]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        fx_spot = 1.0
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, fx_spot)
+    
+    @pytest.fixture
+    def second_fx_model(self):
+        """Create second FX model for multi-currency basket."""
+        n = 2
+        
+        # Different parameters for second currency
+        x0 = np.array([[0.06, 0.01], [0.01, 0.04]])
+        omega = np.array([[0.025, 0.003], [0.003, 0.018]])
+        m = np.array([[-0.25, 0.0], [0.0, -0.15]])
+        sigma = np.array([[0.06, 0.02], [0.02, 0.04]])
+        
+        alpha_i = 0.05  # Same base currency
+        alpha_j = 0.07  # Different foreign currency
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 0.7]])
+        fx_spot = 1.2
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, fx_spot)
+    
+    def test_single_currency_basket(self, single_fx_model):
+        """Test basket with single currency (should match single option)."""
+        # Create basket with single currency
+        basket = LrwCurrencyBasket([single_fx_model], [1.0])
+        
+        maturity = 2.0
+        strike = 0.9
+        
+        # Set option properties
+        basket.set_option_properties(maturity, strike)
+        single_fx_model.set_option_properties(maturity, strike)
+        
+        # Price basket option
+        basket_price, basket_delta_report = basket.compute_delta_strategy()
+        
+        # Price single option
+        single_price = single_fx_model.price_fx_option()
+        
+        # Prices should match
+        assert_almost_equal(basket_price, single_price, decimal=6)
+        
+        # Delta report should have one entry
+        assert len(basket_delta_report) == 1
+    
+    def test_weighted_basket(self, single_fx_model):
+        """Test basket with different weights of same currency."""
+        # Create basket with weights [0.7, 0.3] of same currency
+        basket = LrwCurrencyBasket([single_fx_model, single_fx_model], [0.7, 0.3])
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        # Set option properties
+        basket.set_option_properties(maturity, strike)
+        
+        # Price basket option
+        basket_price, _ = basket.compute_delta_strategy()
+        
+        # Basket price should be positive
+        assert basket_price > 0
+        
+        # Price single option for comparison
+        single_fx_model.set_option_properties(maturity, strike)
+        single_price = single_fx_model.price_fx_option()
+        
+        # Basket with same underlying should have price related to single
+        # (Not exactly equal due to basket dynamics)
+        assert 0.5 * single_price < basket_price < 1.5 * single_price
+    
+    def test_multi_currency_basket(self, single_fx_model, second_fx_model):
+        """Test basket with multiple currencies."""
+        # Create basket with two different currencies
+        basket = LrwCurrencyBasket([single_fx_model, second_fx_model], [0.5, 0.5])
+        
+        maturity = 1.0
+        strike = 1.1
+        
+        # Set option properties
+        basket.set_option_properties(maturity, strike)
+        
+        # Price basket option
+        basket_price, delta_report = basket.compute_delta_strategy()
+        
+        # Basket price should be positive
+        assert basket_price > 0
+        
+        # Delta report should have entries for both currencies
+        assert len(delta_report) == 2
+        
+        # Check basket value at spot
+        basket_spot = 0.5 * single_fx_model.fx_spot + 0.5 * second_fx_model.fx_spot
+        
+        # Option should have reasonable value relative to basket spot
+        assert 0 < basket_price < basket_spot
+    
+    def test_basket_gamma_calculation(self, single_fx_model):
+        """Test gamma calculation for basket options."""
+        # Single currency basket for simplicity
+        basket = LrwCurrencyBasket([single_fx_model], [1.0])
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        basket.set_option_properties(maturity, strike)
+        
+        # Calculate gamma
+        gamma_value, gamma_report = basket.compute_gamma(0)
+        
+        # Gamma should be non-negative
+        assert gamma_value >= 0
+        
+        # Gamma report should contain information
+        assert isinstance(gamma_report, dict)
+        assert len(gamma_report) > 0
+    
+    def test_basket_cross_gamma(self, single_fx_model, second_fx_model):
+        """Test cross-gamma calculation for multi-currency basket."""
+        # Create basket with two currencies
+        basket = LrwCurrencyBasket([single_fx_model, second_fx_model], [0.6, 0.4])
+        
+        maturity = 1.0
+        strike = 1.05
+        
+        basket.set_option_properties(maturity, strike)
+        
+        # Calculate cross-gamma between currencies
+        cross_gamma, cross_gamma_report = basket.compute_cross_gamma(0, 1)
+        
+        # Cross-gamma can be positive or negative
+        assert isinstance(cross_gamma, (int, float))
+        
+        # Report should contain information
+        assert isinstance(cross_gamma_report, dict)
+        
+        # Self cross-gamma should equal regular gamma
+        self_gamma, _ = basket.compute_cross_gamma(0, 0)
+        regular_gamma, _ = basket.compute_gamma(0)
+        assert_almost_equal(self_gamma, regular_gamma, decimal=6)
+    
+    def test_basket_with_zero_weights(self, single_fx_model, second_fx_model):
+        """Test basket behavior with zero weights."""
+        # Create basket where one weight is zero
+        basket = LrwCurrencyBasket([single_fx_model, second_fx_model], [1.0, 0.0])
+        
+        maturity = 1.0
+        strike = 0.95
+        
+        basket.set_option_properties(maturity, strike)
+        
+        # Price should equal single currency option
+        basket_price, _ = basket.compute_delta_strategy()
+        
+        single_fx_model.set_option_properties(maturity, strike)
+        single_price = single_fx_model.price_fx_option()
+        
+        assert_almost_equal(basket_price, single_price, decimal=6)
+    
+    def test_basket_properties(self, single_fx_model, second_fx_model):
+        """Test basic properties of basket options."""
+        weights = [0.3, 0.7]
+        basket = LrwCurrencyBasket([single_fx_model, second_fx_model], weights)
+        
+        # Check number of currencies
+        assert basket.n_currency == 2
+        
+        # Check weights
+        assert_almost_equal(basket.weights[0], weights[0])
+        assert_almost_equal(basket.weights[1], weights[1])
+        
+        # Check FX models are stored correctly
+        assert basket.fx_models[0] == single_fx_model
+        assert basket.fx_models[1] == second_fx_model
+    
+    def test_basket_pricing_consistency(self, single_fx_model):
+        """Test pricing consistency for basket options."""
+        # Create baskets with different weight combinations
+        basket1 = LrwCurrencyBasket([single_fx_model], [1.0])
+        basket2 = LrwCurrencyBasket([single_fx_model, single_fx_model], [0.5, 0.5])
+        basket3 = LrwCurrencyBasket([single_fx_model, single_fx_model], [0.3, 0.7])
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        prices = []
+        for basket in [basket1, basket2, basket3]:
+            basket.set_option_properties(maturity, strike)
+            price, _ = basket.compute_delta_strategy()
+            prices.append(price)
+        
+        # All baskets have same underlying, prices should be similar
+        # (but not identical due to basket dynamics)
+        assert max(prices) / min(prices) < 1.5
+    
+    def test_basket_gamma_matrix(self, single_fx_model, second_fx_model):
+        """Test full gamma matrix for multi-currency basket."""
+        basket = LrwCurrencyBasket([single_fx_model, second_fx_model], [0.5, 0.5])
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        basket.set_option_properties(maturity, strike)
+        
+        # Compute full gamma matrix
+        n_currencies = basket.n_currency
+        gamma_matrix = np.zeros((n_currencies, n_currencies))
+        
+        for i in range(n_currencies):
+            for j in range(i, n_currencies):
+                gamma, _ = basket.compute_cross_gamma(i, j)
+                gamma_matrix[i, j] = gamma
+                if i != j:
+                    gamma_matrix[j, i] = gamma  # Symmetric
+        
+        # Gamma matrix should be symmetric
+        assert_almost_equal(gamma_matrix, gamma_matrix.T)
+        
+        # Diagonal elements should be non-negative (regular gammas)
+        assert np.all(np.diag(gamma_matrix) >= -1e-10)  # Allow small numerical errors
+
+
+class TestBasketEdgeCases:
+    """Test edge cases for basket options."""
+    
+    def create_simple_model(self, spot=1.0):
+        """Create simple FX model."""
+        n = 2
+        x0 = np.array([[0.05, 0.0], [0.0, 0.05]])
+        omega = np.array([[0.02, 0.0], [0.0, 0.02]])
+        m = np.array([[-0.2, 0.0], [0.0, -0.2]])
+        sigma = np.array([[0.05, 0.0], [0.0, 0.05]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, spot)
+    
+    def test_basket_with_many_currencies(self):
+        """Test basket with many currencies."""
+        # Create 5 currencies with different spots
+        models = [self.create_simple_model(spot=0.8 + 0.1 * i) for i in range(5)]
+        weights = [0.2] * 5  # Equal weights
+        
+        basket = LrwCurrencyBasket(models, weights)
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        basket.set_option_properties(maturity, strike)
+        
+        # Should be able to price
+        price, delta_report = basket.compute_delta_strategy()
+        
+        assert price > 0
+        assert len(delta_report) == 5
+    
+    def test_basket_with_extreme_weights(self):
+        """Test basket with extreme weight distribution."""
+        model1 = self.create_simple_model(spot=1.0)
+        model2 = self.create_simple_model(spot=1.2)
+        
+        # Extreme weights
+        basket = LrwCurrencyBasket([model1, model2], [0.99, 0.01])
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        basket.set_option_properties(maturity, strike)
+        
+        # Price should be close to first currency option
+        basket_price, _ = basket.compute_delta_strategy()
+        
+        model1.set_option_properties(maturity, strike)
+        single_price = model1.price_fx_option()
+        
+        # Should be very close but not identical
+        assert abs(basket_price - single_price) / single_price < 0.1
+    
+    def test_basket_negative_correlation_effect(self):
+        """Test basket with negatively correlated currencies."""
+        # This would require creating models with negative correlation
+        # between currencies, which would reduce basket volatility
+        # and hence option value
+        
+        # Create two models (simplified test)
+        model1 = self.create_simple_model(spot=1.0)
+        model2 = self.create_simple_model(spot=1.0)
+        
+        basket = LrwCurrencyBasket([model1, model2], [0.5, 0.5])
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        basket.set_option_properties(maturity, strike)
+        
+        # Price basket
+        basket_price, _ = basket.compute_delta_strategy()
+        
+        # Price single currency
+        model1.set_option_properties(maturity, strike)
+        single_price = model1.price_fx_option()
+        
+        # Basket of identical currencies should have lower vol
+        # due to diversification (even without explicit negative correlation)
+        assert basket_price <= single_price * 1.1  # Allow small numerical error

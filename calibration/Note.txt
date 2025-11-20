@@ -1,0 +1,16 @@
+Checked
+Seemed ok now
+TODO: init  
+
+NOT OK
+alpha_curve_NOTSUREIFNEEDED.py--> seems to not be ok
+calibration_jax_implementations_NOTSUREIFNEEDED.py--> seems to not be ok
+OK
+alpha_curve.py--> seems to be used
+
+pseudo_inverse.py--> might not be used but kept for now
+parameter_utils.py--> check if file name is good or the import are good.
+market_data_handler--> seems ok
+
+
+

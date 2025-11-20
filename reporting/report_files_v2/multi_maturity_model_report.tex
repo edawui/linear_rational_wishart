@@ -1,0 +1,1013 @@
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{rotating}
+\usepackage{pdflscape}
+\geometry{margin=0.8in}
+\usepackage{xcolor}
+\usepackage{colortbl}
+
+\title{LRW FX Model Calibration Report}
+\author{Model Calibration Team}
+\date{\today}
+
+\begin{document}
+
+\graphicspath{{charts/}}
+
+\maketitle
+
+\section{Summary}
+This report presents the calibrated parameters for the LRW (Linear-Rational-Wishart) FX Model across multiple calibration dates and option maturities. The model is calibrated on domestic and foreign curves with various option tenor configurations.
+
+\subsection{Calibration Overview}
+\begin{itemize}
+\item \textbf{Model Type:} LRW FX Model
+\item \textbf{Dimensions:} 2-factor model
+\item \textbf{Calibration Dates:} 5 dates from 2025-03-14 to 2025-05-30
+\item \textbf{Option Tenors:} 1Y, 2Y, 3Y, 4Y, 5Y, 7Y, 10Y, 3Y-7Y
+\item \textbf{Zero Coupon Curve Range:} 2Y to 11Y
+\item \textbf{Calibration Objectives:} Price (bonds), Volatility (options)
+\end{itemize}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Model Type & LRW FX Model \\
+Dimensions (n) & 2 \\
+Jump Component & No Jump \\
+$\alpha_i   \neq  \alpha_j$ relationship & Varies by date \\
+\bottomrule
+\end{tabular}
+\caption{General Model Settings}
+\end{table}
+
+\begin{itemize}
+
+\item \textbf{The matrix $u_i$ for the domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\item \textbf{The matrix $u_j$  for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+\end{itemize}
+\section{Calibration Quality Summary}
+
+
+%\begin{landscape}
+\begin{longtable}{lcc}
+\caption{Calibration on yield data quality metrics by date (RMSE in b.p. - calibrated on price, on 2Y-10Y instruments)} \\
+\toprule
+Date &  RMSE OIS Price & RMSE OIS Yield   \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\toprule
+Date &  RMSE OIS Price & RMSE OIS Yield  \\
+\midrule
+\endhead
+\midrule \multicolumn{3}{r}{{Continued on next page}} \\ \midrule
+\endfoot
+\bottomrule
+\endlastfoot
+03/14/2025  & 30.35 & 40.78   \\
+04/01/2025  & 34.13 & 48.46   \\
+04/15/2025  & 41.97 & 62.02   \\
+05/16/2025  & 41.86 & 54.60   \\
+05/30/2025  & 46.81 & 61.53   \\
+
+\end{longtable}
+%\end{landscape}
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%% Calibration results on Vol%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{landscape}
+\begin{longtable}{lccc}
+\caption{Calibration on Vol data quality metrics by date and tenor (RMSE in b.p.)} \\
+\toprule
+Date & Tenor & RMSE Option Price & RMSE Option Vol  \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\toprule
+Date & Tenor & RMSE Option Price & RMSE Option Vol \\
+\midrule
+\endhead
+\midrule \multicolumn{4}{r}{{Continued on next page}} \\ \midrule
+\endfoot
+\bottomrule
+\endlastfoot
+\rowcolor{gray!15}
+03/14/2025 & 1Y & 12.28 & 58.01  \\
+\rowcolor{gray!15}
+03/14/2025 & 2Y & 6.58 & 20.87  \\
+\rowcolor{gray!15}
+03/14/2025 & 3Y & 9.99 & 28.71  \\
+\rowcolor{gray!15}
+03/14/2025 & 4Y & 12.59 & 32.69  \\
+\rowcolor{gray!15}
+03/14/2025 & 5Y & 17.26 & 24.96  \\
+\rowcolor{gray!15}
+03/14/2025 & 7Y & 24.91 & 48.47  \\
+\rowcolor{gray!15}
+03/14/2025 & 10Y & 74.23 & 109.35  \\
+\rowcolor{gray!15}
+03/14/2025 & 3Y-7Y & 94.66 & 151.57  \\
+\rowcolor{blue!10}
+04/01/2025 & 1Y & 12.48 & 56.25  \\
+\rowcolor{blue!10}
+04/01/2025 & 2Y & 4.61 & 14.29  \\
+\rowcolor{blue!10}
+04/01/2025 & 3Y & 8.81 & 24.87  \\
+\rowcolor{blue!10}
+04/01/2025 & 4Y & 11.82 & 25.42  \\
+\rowcolor{blue!10}
+04/01/2025 & 5Y & 15.84 & 24.55  \\
+\rowcolor{blue!10}
+04/01/2025 & 7Y & 15.61 & 30.87  \\
+\rowcolor{blue!10}
+04/01/2025 & 10Y & 64.16 & 95.24  \\
+\rowcolor{blue!10}
+04/01/2025 & 3Y-7Y & 88.66 & 136.22  \\
+\rowcolor{gray!15}
+04/15/2025 & 1Y & 5.82 & 25.63  \\
+\rowcolor{gray!15}
+04/15/2025 & 2Y & 9.46 & 27.48  \\
+\rowcolor{gray!15}
+04/15/2025 & 3Y & 145.91 & 226.78  \\
+\rowcolor{gray!15}
+04/15/2025 & 4Y & 22.47 & 34.84  \\
+\rowcolor{gray!15}
+04/15/2025 & 5Y & 23.07 & 43.99  \\
+\rowcolor{gray!15}
+04/15/2025 & 7Y & 256.48 & 263.89  \\
+\rowcolor{gray!15}
+04/15/2025 & 10Y & 344.29 & 329.32  \\
+\rowcolor{gray!15}
+04/15/2025 & 3Y-7Y & 205.23 & 260.46  \\
+\rowcolor{blue!10}
+05/16/2025 & 1Y & 9.18 & 26.64  \\
+\rowcolor{blue!10}
+05/16/2025 & 2Y & 31.32 & 86.64  \\
+\rowcolor{blue!10}
+05/16/2025 & 3Y & 35.73 & 73.77  \\
+\rowcolor{blue!10}
+05/16/2025 & 4Y & 6.79 & 13.31  \\
+\rowcolor{blue!10}
+05/16/2025 & 5Y & 66.56 & 109.06  \\
+\rowcolor{blue!10}
+05/16/2025 & 7Y & 82.03 & 128.37  \\
+\rowcolor{blue!10}
+05/16/2025 & 10Y & 111.96 & 145.20  \\
+\rowcolor{blue!10}
+05/16/2025 & 3Y-7Y & 92.30 & 131.36  \\
+\rowcolor{gray!15}
+05/30/2025 & 1Y & 9.50 & 18.92  \\
+\rowcolor{gray!15}
+05/30/2025 & 2Y & 8.17 & 6.84  \\
+\rowcolor{gray!15}
+05/30/2025 & 3Y & 57.49 & 117.08  \\
+\rowcolor{gray!15}
+05/30/2025 & 4Y & 74.08 & 128.15  \\
+\rowcolor{gray!15}
+05/30/2025 & 5Y & 7.89 & 13.81  \\
+\rowcolor{gray!15}
+05/30/2025 & 7Y & 130.72 & 188.18  \\
+\rowcolor{gray!15}
+05/30/2025 & 10Y & 123.79 & 138.86  \\
+\rowcolor{gray!15}
+05/30/2025 & 3Y-7Y & 98.26 & 140.01  \\
+
+\end{longtable}
+%\end{landscape}
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%% Model parameters on Yield curves %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{landscape}
+\begin{longtable}{lccccccccc}
+\caption{Model paramters calibrated on yield curve by date} \\
+\toprule
+Date & FX Spot & $alpha_i$ & $alpha_j$ & ${x_0}_{11}$ & ${x_0}_{22}$ & $\omega_{11}$ & $\omega_{22}$ & $m_{11}$ & $m_{22}$  \\
+
+\midrule
+\endfirsthead
+\multicolumn{10}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\toprule
+Date & FX Spot & $alpha_i$ & $alpha_j$ & ${x_0}_{11}$ & ${x_0}_{22}$ & $\omega_{11}$ & $\omega_{22}$ & $m_{11}$ & $m_{22}$  \\
+\midrule
+\endhead
+\midrule \multicolumn{10}{r}{{Continued on next page}} \\ \midrule
+\endfoot
+\bottomrule
+\endlastfoot
+03/14/2025& 1.08800 & 0.039593 & 0.028338 & 0.199392 & 0.054721 & 0.033431 & 0.045622 & -0.076556 & -0.280272   \\
+04/01/2025& 1.07875 & 0.038260 & 0.026502 & 0.205832 & 0.053567 & 0.030540 & 0.040193 & -0.065827 & -0.245932   \\
+04/15/2025& 1.12730 & 0.040107 & 0.025612 & 0.017524 & 0.012915 & 0.010914 & 0.023815 & -0.119239 & -0.293287   \\
+05/16/2025& 1.11525 & 0.041060 & 0.026136 & 0.095029 & 0.002022 & 0.025684 & 0.016454 & -0.101037 & -0.253732   \\
+05/30/2025& 1.13590 & 0.041177 & 0.026113 & 0.070030 & 0.002481 & 0.022693 & 0.017231 & -0.105884 & -0.242980   \\
+
+\end{longtable}
+%\end{landscape}
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%% Model parameters on vol data curves %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{landscape}
+\begin{longtable}{lcccccc}
+\caption{Model paramters calibrated on Vol data by date and by tenor} \\
+\toprule
+Date &  Tenor & $\sigma_{11}$ & $\sigma_{22}$ & Correl-$\sigma$  & Correl-$x_0$   & Correl-$\omega$   \\
+
+\midrule
+\endfirsthead
+\multicolumn{7}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\toprule
+Date &  Tenor & $\sigma_{11}$ & $\sigma_{22}$ & Correl-$\sigma$  & Correl-$x_0$   & Correl-$\omega$   \\
+\midrule
+\endhead
+\midrule \multicolumn{7}{r}{{Continued on next page}} \\ \midrule
+\endfoot
+\bottomrule
+\endlastfoot
+\rowcolor{gray!15}
+03/14/2025 & 1Y &  0.048149 & 0.104592 & 0.417794 & 0.299886 & 0.352399   \\
+\rowcolor{gray!15}
+03/14/2025 & 2Y &  0.086735 & 0.155892 & 0.067034 & 0.070916 & 0.188956   \\
+\rowcolor{gray!15}
+03/14/2025 & 3Y &  0.115547 & 0.209549 & 0.017583 & 0.131158 & 0.269489   \\
+\rowcolor{gray!15}
+03/14/2025 & 4Y &  0.142608 & 0.288022 & 0.149541 & 0.196754 & 0.327120   \\
+\rowcolor{gray!15}
+03/14/2025 & 5Y &  0.171886 & 0.315597 & 0.128263 & 0.120524 & 0.285681   \\
+\rowcolor{gray!15}
+03/14/2025 & 7Y &  0.196883 & 0.395746 & 0.258847 & -0.012087 & 0.099275   \\
+\rowcolor{gray!15}
+03/14/2025 & 10Y &  0.283572 & 0.877673 & 0.023354 & 0.036176 & 0.352668   \\
+\rowcolor{gray!15}
+03/14/2025 & 3Y-7Y &  0.157672 & 0.219135 & 0.035675 & 0.155305 & 0.326858   \\
+\rowcolor{blue!10}
+04/01/2025 & 1Y &  0.043521 & 0.112467 & 0.392693 & 0.311332 & 0.366536   \\
+\rowcolor{blue!10}
+04/01/2025 & 2Y &  0.078913 & 0.169948 & 0.130060 & 0.226049 & 0.320741   \\
+\rowcolor{blue!10}
+04/01/2025 & 3Y &  0.106774 & 0.212325 & 0.002812 & 0.088384 & 0.304616   \\
+\rowcolor{blue!10}
+04/01/2025 & 4Y &  0.134075 & 0.279122 & 0.128935 & 0.188360 & 0.306159   \\
+\rowcolor{blue!10}
+04/01/2025 & 5Y &  0.158821 & 0.311801 & 0.161090 & 0.115301 & 0.275926   \\
+\rowcolor{blue!10}
+04/01/2025 & 7Y &  0.182382 & 0.335337 & 0.363974 & 0.023833 & 0.243541   \\
+\rowcolor{blue!10}
+04/01/2025 & 10Y &  0.252547 & 0.738833 & -0.031850 & 0.036301 & 0.327762   \\
+\rowcolor{blue!10}
+04/01/2025 & 3Y-7Y &  0.150440 & 0.348989 & 0.344920 & 0.573781 & 0.738241   \\
+\rowcolor{gray!15}
+04/15/2025 & 1Y &  0.110610 & 0.167913 & -0.469171 & 0.338866 & 0.539619   \\
+\rowcolor{gray!15}
+04/15/2025 & 2Y &  0.181211 & 0.246447 & 0.580332 & -0.224206 & -0.343220   \\
+\rowcolor{gray!15}
+04/15/2025 & 3Y &  0.638536 & 0.638536 & 0.170000 & 0.025000 & 0.250000   \\
+\rowcolor{gray!15}
+04/15/2025 & 4Y &  0.286226 & 0.374657 & 0.616818 & -0.290657 & -0.433651   \\
+\rowcolor{gray!15}
+04/15/2025 & 5Y &  0.320645 & 0.414507 & 0.648782 & 0.097325 & -0.535648   \\
+\rowcolor{gray!15}
+04/15/2025 & 7Y &  1.398511 & 0.978765 & 0.349758 & -0.000541 & -0.106172   \\
+\rowcolor{gray!15}
+04/15/2025 & 10Y &  1.452547 & 1.306530 & 0.517990 & -0.001971 & -0.233062   \\
+\rowcolor{gray!15}
+04/15/2025 & 3Y-7Y &  0.867485 & 0.820381 & 0.296084 & 0.014923 & 0.049784   \\
+\rowcolor{blue!10}
+05/16/2025 & 1Y &  0.059448 & 0.137378 & -0.466384 & 0.117401 & 0.343617   \\
+\rowcolor{blue!10}
+05/16/2025 & 2Y &  0.121601 & 0.472124 & 0.102438 & 0.352313 & 0.439334   \\
+\rowcolor{blue!10}
+05/16/2025 & 3Y &  0.158561 & 0.434221 & -0.158377 & 0.180471 & 0.290439   \\
+\rowcolor{blue!10}
+05/16/2025 & 4Y &  0.174196 & 0.267905 & 0.528161 & -0.180374 & -0.141901   \\
+\rowcolor{blue!10}
+05/16/2025 & 5Y &  0.258649 & 0.646250 & 0.275923 & 0.020441 & 0.149252   \\
+\rowcolor{blue!10}
+05/16/2025 & 7Y &  0.510693 & 1.010088 & 0.383548 & -0.049770 & -0.373469   \\
+\rowcolor{blue!10}
+05/16/2025 & 10Y &  0.700389 & 0.989595 & 0.434313 & 0.009407 & -0.017875   \\
+\rowcolor{blue!10}
+05/16/2025 & 3Y-7Y &  0.206640 & 0.343459 & 0.430933 & -0.015431 & 0.114433   \\
+\rowcolor{gray!15}
+05/30/2025 & 1Y &  0.071655 & 0.139067 & -0.471358 & 0.062448 & 0.285215   \\
+\rowcolor{gray!15}
+05/30/2025 & 2Y &  0.118039 & 0.191006 & -0.445822 & 0.521397 & 0.380089   \\
+\rowcolor{gray!15}
+05/30/2025 & 3Y &  0.202973 & 0.614903 & 0.176331 & 0.156164 & 0.272337   \\
+\rowcolor{gray!15}
+05/30/2025 & 4Y &  0.271227 & 0.619849 & 0.216720 & 0.023299 & 0.220960   \\
+\rowcolor{gray!15}
+05/30/2025 & 5Y &  0.220458 & 0.298461 & 0.570973 & -0.174474 & -0.285795   \\
+\rowcolor{gray!15}
+05/30/2025 & 7Y &  0.928587 & 1.036051 & 0.400396 & 0.012902 & -0.015855   \\
+\rowcolor{gray!15}
+05/30/2025 & 10Y &  1.447348 & 1.391217 & 0.574545 & 0.012833 & -0.254068   \\
+\rowcolor{gray!15}
+05/30/2025 & 3Y-7Y &  0.216083 & 0.293019 & 0.493946 & -0.091590 & -0.165838   \\
+
+\end{longtable}
+%\end{landscape}
+
+\section{Cross-Tenor Analysis}
+
+\subsection{Calibration Quality by Tenor}
+
+The following analysis compares calibration quality across different option tenors:
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Tenor & Avg RMSE Option Price & Avg RMSE Option Vol \\
+\midrule
+1Y  & 9.85 & 37.09 \\
+2Y  & 12.03 & 31.22 \\
+3Y  & 51.58 & 94.24 \\
+4Y  & 25.55 & 46.88 \\
+5Y  & 26.12 & 43.27 \\
+7Y  & 101.95 & 131.95 \\
+10Y  & 143.69 & 163.59 \\
+3Y-7Y  & 115.82 & 163.92 \\
+
+\bottomrule
+\end{tabular}
+\caption{Average Calibration Quality Metrics by Tenor.}
+\end{table}
+ Note, for the yield curve, the average RMSE on price is 39.02, and the average RMSE on yield is 53.48.
+ 
+\section{Calibration Result Charts}
+
+This section presents the calibration results through various charts showing the yield curves and implied volatility surfaces for each calibration date.
+
+
+\subsection{Calibration Results for March 14, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_zcrate_20250314_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250314}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_price_20250314_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250314}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for March 14, 2025}
+\label{fig:domestic_curves_20250314}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_zcrate_20250314_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250314}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_price_20250314_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250314}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for March 14, 2025}
+\label{fig:foreign_curves_20250314}
+\end{figure}
+
+
+
+
+    \subsubsection{FX Volatility Surface - Calibration by tenor}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_1__1_fx_option_vol_maturity_1.00_20250314_0000_.png}
+    \caption{1Y}
+    \label{fig:fx_option_vol_1Y_20250314}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_2__2_fx_option_vol_maturity_2.00_20250314_0000_.png}
+    \caption{2Y}
+    \label{fig:fx_option_vol_2Y_20250314}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_3__3_fx_option_vol_maturity_3.00_20250314_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250314}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_4__4_fx_option_vol_maturity_4.00_20250314_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250314}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_5__5_fx_option_vol_maturity_5.00_20250314_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250314}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_7__7_fx_option_vol_maturity_7.00_20250314_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250314}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for All Tenors (separate calibration by tenor) - March 14, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250314}
+    \end{figure}
+
+    \vspace{1cm}
+    
+    \subsubsection{FX Volatility Surface - joint calibration for tenors 3Y, 4Y, 5Y, and 7Y}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_3.00_20250314_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250314}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_4.00_20250314_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250314}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_5.00_20250314_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250314}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_7.00_20250314_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250314}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for joint calibration for 3Y, 4Y, 5Y, and 7Y - March 14, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250314}
+    \end{figure}
+
+    \vspace{1cm}
+    
+\subsection{Calibration Results for April 01, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_zcrate_20250401_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250401}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_price_20250401_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250401}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for April 01, 2025}
+\label{fig:domestic_curves_20250401}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_zcrate_20250401_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250401}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_price_20250401_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250401}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for April 01, 2025}
+\label{fig:foreign_curves_20250401}
+\end{figure}
+
+
+
+
+    \subsubsection{FX Volatility Surface - Calibration by tenor}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_1__1_fx_option_vol_maturity_1.00_20250401_0000_.png}
+    \caption{1Y}
+    \label{fig:fx_option_vol_1Y_20250401}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_2__2_fx_option_vol_maturity_2.00_20250401_0000_.png}
+    \caption{2Y}
+    \label{fig:fx_option_vol_2Y_20250401}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_3__3_fx_option_vol_maturity_3.00_20250401_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250401}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_4__4_fx_option_vol_maturity_4.00_20250401_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250401}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_5__5_fx_option_vol_maturity_5.00_20250401_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250401}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_7__7_fx_option_vol_maturity_7.00_20250401_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250401}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for All Tenors (separate calibration by tenor) - April 01, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250401}
+    \end{figure}
+
+    \vspace{1cm}
+    
+    \subsubsection{FX Volatility Surface - joint calibration for tenors 3Y, 4Y, 5Y, and 7Y}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_3.00_20250401_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250401}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_4.00_20250401_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250401}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_5.00_20250401_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250401}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_7.00_20250401_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250401}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for joint calibration for 3Y, 4Y, 5Y, and 7Y - April 01, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250401}
+    \end{figure}
+
+    \vspace{1cm}
+    
+\subsection{Calibration Results for April 15, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_zcrate_20250415_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250415}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_price_20250415_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250415}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for April 15, 2025}
+\label{fig:domestic_curves_20250415}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_zcrate_20250415_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250415}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_price_20250415_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250415}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for April 15, 2025}
+\label{fig:foreign_curves_20250415}
+\end{figure}
+
+
+
+
+    \subsubsection{FX Volatility Surface - Calibration by tenor}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_1__1_fx_option_vol_maturity_1.00_20250415_0000_.png}
+    \caption{1Y}
+    \label{fig:fx_option_vol_1Y_20250415}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_2__2_fx_option_vol_maturity_2.00_20250415_0000_.png}
+    \caption{2Y}
+    \label{fig:fx_option_vol_2Y_20250415}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_3__3_fx_option_vol_maturity_3.00_20250415_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250415}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_4__4_fx_option_vol_maturity_4.00_20250415_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250415}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_5__5_fx_option_vol_maturity_5.00_20250415_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250415}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_7__7_fx_option_vol_maturity_7.00_20250415_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250415}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for All Tenors (separate calibration by tenor) - April 15, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250415}
+    \end{figure}
+
+    \vspace{1cm}
+    
+    \subsubsection{FX Volatility Surface - joint calibration for tenors 3Y, 4Y, 5Y, and 7Y}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_3.00_20250415_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250415}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_4.00_20250415_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250415}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_5.00_20250415_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250415}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_7.00_20250415_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250415}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for joint calibration for 3Y, 4Y, 5Y, and 7Y - April 15, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250415}
+    \end{figure}
+
+    \vspace{1cm}
+    
+\subsection{Calibration Results for May 16, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_zcrate_20250516_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250516}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_price_20250516_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250516}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for May 16, 2025}
+\label{fig:domestic_curves_20250516}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_zcrate_20250516_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250516}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_price_20250516_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250516}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for May 16, 2025}
+\label{fig:foreign_curves_20250516}
+\end{figure}
+
+
+
+
+    \subsubsection{FX Volatility Surface - Calibration by tenor}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_1__1_fx_option_vol_maturity_1.00_20250516_0000_.png}
+    \caption{1Y}
+    \label{fig:fx_option_vol_1Y_20250516}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_2__2_fx_option_vol_maturity_2.00_20250516_0000_.png}
+    \caption{2Y}
+    \label{fig:fx_option_vol_2Y_20250516}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_3__3_fx_option_vol_maturity_3.00_20250516_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250516}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_4__4_fx_option_vol_maturity_4.00_20250516_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250516}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_5__5_fx_option_vol_maturity_5.00_20250516_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250516}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_7__7_fx_option_vol_maturity_7.00_20250516_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250516}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for All Tenors (separate calibration by tenor) - May 16, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250516}
+    \end{figure}
+
+    \vspace{1cm}
+    
+    \subsubsection{FX Volatility Surface - joint calibration for tenors 3Y, 4Y, 5Y, and 7Y}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_3.00_20250516_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250516}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_4.00_20250516_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250516}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_5.00_20250516_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250516}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_7.00_20250516_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250516}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for joint calibration for 3Y, 4Y, 5Y, and 7Y - May 16, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250516}
+    \end{figure}
+
+    \vspace{1cm}
+    
+\subsection{Calibration Results for May 30, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_zcrate_20250530_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250530}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Domestic_bonds_price_20250530_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250530}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for May 30, 2025}
+\label{fig:domestic_curves_20250530}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_zcrate_20250530_0000_.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250530}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{calibrate_on_vol_4__4_Foreign_bonds_price_20250530_0000_.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250530}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for May 30, 2025}
+\label{fig:foreign_curves_20250530}
+\end{figure}
+
+
+
+
+    \subsubsection{FX Volatility Surface - Calibration by tenor}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_1__1_fx_option_vol_maturity_1.00_20250530_0000_.png}
+    \caption{1Y}
+    \label{fig:fx_option_vol_1Y_20250530}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_2__2_fx_option_vol_maturity_2.00_20250530_0000_.png}
+    \caption{2Y}
+    \label{fig:fx_option_vol_2Y_20250530}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_3__3_fx_option_vol_maturity_3.00_20250530_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250530}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_4__4_fx_option_vol_maturity_4.00_20250530_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250530}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_5__5_fx_option_vol_maturity_5.00_20250530_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250530}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_7__7_fx_option_vol_maturity_7.00_20250530_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250530}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for All Tenors (separate calibration by tenor) - May 30, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250530}
+    \end{figure}
+
+    \vspace{1cm}
+    
+    \subsubsection{FX Volatility Surface - joint calibration for tenors 3Y, 4Y, 5Y, and 7Y}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_3.00_20250530_0000_.png}
+    \caption{3Y}
+    \label{fig:fx_option_vol_3Y_20250530}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_4.00_20250530_0000_.png}
+    \caption{4Y}
+    \label{fig:fx_option_vol_4Y_20250530}
+    \end{subfigure}
+
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_5.00_20250530_0000_.png}
+    \caption{5Y}
+    \label{fig:fx_option_vol_5Y_20250530}
+    \end{subfigure}\hfill
+\begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{calibrate_on_vol_ALL__all_tenors_fx_option_vol_maturity_7.00_20250530_0000_.png}
+    \caption{7Y}
+    \label{fig:fx_option_vol_7Y_20250530}
+    \end{subfigure}
+    \caption{FX Implied Volatility Surfaces for joint calibration for 3Y, 4Y, 5Y, and 7Y - May 30, 2025}
+    \label{fig:fx_option_vol_all_tenors_20250530}
+    \end{figure}
+
+    \vspace{1cm}
+    
+
+\end{document}

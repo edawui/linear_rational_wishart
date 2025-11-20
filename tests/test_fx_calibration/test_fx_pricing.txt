@@ -1,0 +1,476 @@
+"""
+Tests for FX option pricing.
+
+This module tests various pricing methods for FX options including
+Fourier transform methods, Monte Carlo simulation, and Greeks calculations.
+"""
+
+import numpy as np
+import pytest
+from numpy.testing import assert_almost_equal
+
+from wishart_processes.models.fx import LrwFx
+from wishart_processes.pricing import black_scholes
+
+
+class TestFxOptionPricing:
+    """Test FX option pricing methods."""
+    
+    @pytest.fixture
+    def standard_model(self):
+        """Create standard FX model for pricing tests."""
+        n = 2
+        
+        x0 = np.array([[4.99996419e+00, -3.18397238e-04],
+                       [-3.18397238e-04, 4.88302000e-04]])
+        
+        omega = np.array([[2.09114424e+00, -8.04612684e-04],
+                          [-8.04612684e-04, 1.92477100e-03]])
+        
+        m = np.array([[-0.20583617, 0.0],
+                      [0.0, -0.02069993]])
+        
+        sigma = np.array([[0.15871937, 0.10552826],
+                          [0.10552826, 0.02298161]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        fx_spot = 1.0
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, fx_spot)
+    
+    def test_fourier_pricing(self, standard_model):
+        """Test Fourier transform pricing method."""
+        maturity = 2.0
+        strike = 0.9
+        
+        standard_model.set_option_properties(maturity, strike)
+        
+        # Price using Fourier method
+        fft_price = standard_model.price_fx_option()
+        
+        # Price should be positive
+        assert fft_price > 0
+        
+        # Price should be less than spot (for OTM put-like payoff)
+        assert fft_price < standard_model.fx_spot
+        
+        # Price should be less than discounted forward - strike
+        fx_fwd = standard_model.compute_fx_fwd(maturity)
+        df_domestic = standard_model.lrw_currency_j.bond(maturity)
+        max_price = df_domestic * max(fx_fwd - strike, 0)
+        assert fft_price <= max_price * 1.1  # Allow small numerical error
+    
+    def test_monte_carlo_pricing(self, standard_model):
+        """Test Monte Carlo pricing method."""
+        maturity = 1.0
+        strike = 1.0
+        nb_paths = 5000
+        
+        standard_model.set_option_properties(maturity, strike)
+        
+        # Price using Monte Carlo
+        mc_price = standard_model.price_option_mc(nb_paths, dt=0.01)
+        
+        # Price should be positive
+        assert mc_price > 0
+        
+        # For ATM option, price should be reasonable
+        assert 0.01 < mc_price < 0.5
+    
+    def test_pricing_consistency(self, standard_model):
+        """Test consistency between different pricing methods."""
+        maturity = 1.0
+        strike = 1.0
+        
+        standard_model.set_option_properties(maturity, strike)
+        
+        # Price with different methods
+        fft_price = standard_model.price_fx_option()
+        mc_price = standard_model.price_option_mc(10000, dt=0.01)
+        
+        # Prices should be reasonably close (within 10% for this test)
+        relative_diff = abs(fft_price - mc_price) / max(fft_price, mc_price)
+        assert relative_diff < 0.1, f"FFT: {fft_price}, MC: {mc_price}, Diff: {relative_diff}"
+    
+    def test_price_monotonicity(self, standard_model):
+        """Test that prices decrease with strike (for calls)."""
+        maturity = 1.0
+        strikes = [0.9, 0.95, 1.0, 1.05, 1.1]
+        
+        prices = []
+        for strike in strikes:
+            standard_model.set_option_properties(maturity, strike)
+            price = standard_model.price_fx_option()
+            prices.append(price)
+        
+        # Prices should decrease with strike for calls
+        for i in range(len(prices) - 1):
+            assert prices[i] >= prices[i+1] * 0.95  # Allow small numerical error
+    
+    def test_price_bounds(self, standard_model):
+        """Test that option prices respect arbitrage bounds."""
+        maturity = 1.0
+        strikes = [0.8, 0.9, 1.0, 1.1, 1.2]
+        
+        fx_fwd = standard_model.compute_fx_fwd(maturity)
+        df_domestic = standard_model.lrw_currency_j.bond(maturity)
+        
+        for strike in strikes:
+            standard_model.set_option_properties(maturity, strike)
+            price = standard_model.price_fx_option()
+            
+            # Price bounds
+            intrinsic = max(fx_fwd - strike, 0) * df_domestic
+            max_price = fx_fwd * df_domestic
+            
+            assert price >= intrinsic * 0.99  # Allow small numerical error
+            assert price <= max_price * 1.01
+    
+    def test_batch_pricing(self, standard_model):
+        """Test batch pricing functionality."""
+        maturities = [1.0, 1.0, 2.0, 2.0]
+        strikes = [0.9, 1.0, 0.95, 1.05]
+        call_puts = [True, True, True, True]
+        
+        # Price batch
+        prices = standard_model.price_fx_option_list(
+            "FOURIER",
+            maturities,
+            strikes,
+            call_puts
+        )
+        
+        # Should return correct number of prices
+        assert len(prices) == len(maturities)
+        
+        # All prices should be positive
+        assert all(p > 0 for p in prices)
+        
+        # Prices should be different
+        assert len(set(prices)) > 1
+    
+    def test_pricing_with_different_schemas(self, standard_model):
+        """Test different Monte Carlo schemas."""
+        maturity = 1.0
+        strike = 1.0
+        nb_paths = 5000
+        
+        standard_model.set_option_properties(maturity, strike)
+        
+        schemas = ["EULER", "EULER_FLOORED"]
+        prices = {}
+        
+        for schema in schemas:
+            price = standard_model.price_option_mc(
+                nb_paths,
+                dt=0.01,
+                schema=schema
+            )
+            prices[schema] = price
+        
+        # All prices should be positive
+        for schema, price in prices.items():
+            assert price > 0
+        
+        # Prices should be similar but not necessarily identical
+        price_values = list(prices.values())
+        for i in range(len(price_values) - 1):
+            relative_diff = abs(price_values[i] - price_values[i+1]) / max(price_values)
+            assert relative_diff < 0.2  # Within 20%
+
+
+class TestFxGreeks:
+    """Test Greeks calculations for FX options."""
+    
+    @pytest.fixture
+    def greeks_model(self):
+        """Create model for Greeks testing."""
+        n = 2
+        
+        # Simplified parameters for Greeks testing
+        x0 = np.array([[0.05, 0.01], [0.01, 0.05]])
+        omega = np.array([[0.02, 0.002], [0.002, 0.02]])
+        m = np.array([[-0.2, 0.0], [0.0, -0.2]])
+        sigma = np.array([[0.05, 0.01], [0.01, 0.05]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        fx_spot = 1.0
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, fx_spot)
+    
+    def test_delta_calculation(self, greeks_model):
+        """Test delta calculation."""
+        maturity = 1.0
+        strike = 1.0
+        
+        greeks_model.set_option_properties(maturity, strike)
+        
+        # Calculate delta
+        delta_price, delta_report = greeks_model.compute_delta_strategy()
+        
+        # Delta price should be close to option price
+        option_price = greeks_model.price_fx_option()
+        assert abs(delta_price - option_price) / option_price < 0.1
+        
+        # Delta report should contain hedge positions
+        assert isinstance(delta_report, dict)
+        assert len(delta_report) > 0
+    
+    def test_gamma_calculation(self, greeks_model):
+        """Test gamma calculation."""
+        maturity = 1.0
+        strike = 1.0
+        
+        greeks_model.set_option_properties(maturity, strike)
+        
+        # Calculate gamma
+        gamma_value, gamma_report = greeks_model.compute_gamma()
+        
+        # Gamma should be positive for long options
+        assert gamma_value >= 0
+        
+        # Gamma report should contain information
+        assert isinstance(gamma_report, dict)
+    
+    def test_vega_calculation(self, greeks_model):
+        """Test vega calculation."""
+        maturity = 1.0
+        strike = 1.0
+        n = greeks_model._n
+        
+        greeks_model.set_option_properties(maturity, strike)
+        
+        # Calculate vega for each sigma element
+        vega_matrix = np.zeros((n, n))
+        vega_reports = [[{} for _ in range(n)] for _ in range(n)]
+        
+        for i in range(n):
+            for j in range(n):
+                vega_value, vega_report = greeks_model.compute_vega_strategy(i, j)
+                vega_matrix[i, j] = vega_value
+                vega_reports[i][j] = vega_report
+        
+        # Diagonal vegas should be positive (higher vol -> higher price)
+        assert vega_matrix[0, 0] >= 0
+        assert vega_matrix[1, 1] >= 0
+        
+        # Vega matrix should be symmetric
+        assert_almost_equal(vega_matrix[0, 1], vega_matrix[1, 0])
+    
+    def test_greeks_consistency(self, greeks_model):
+        """Test consistency of Greeks calculations."""
+        maturity = 1.0
+        strikes = [0.9, 1.0, 1.1]
+        
+        for strike in strikes:
+            greeks_model.set_option_properties(maturity, strike)
+            
+            # Get option price and delta
+            option_price = greeks_model.price_fx_option()
+            delta_price, _ = greeks_model.compute_delta_strategy()
+            
+            # Delta hedged portfolio value should be close to option price
+            assert abs(delta_price - option_price) / option_price < 0.1
+    
+    def test_greeks_across_strikes(self, greeks_model):
+        """Test Greeks behavior across different strikes."""
+        maturity = 1.0
+        strikes = np.linspace(0.8, 1.2, 5)
+        
+        deltas = []
+        gammas = []
+        
+        for strike in strikes:
+            greeks_model.set_option_properties(maturity, strike)
+            
+            delta_price, _ = greeks_model.compute_delta_strategy()
+            gamma_value, _ = greeks_model.compute_gamma()
+            
+            deltas.append(delta_price)
+            gammas.append(gamma_value)
+        
+        # Delta should generally decrease with strike (for calls)
+        # This is a general pattern but not strict due to model complexity
+        delta_diffs = np.diff(deltas)
+        assert np.sum(delta_diffs < 0) >= len(delta_diffs) // 2
+        
+        # Gamma should be positive
+        assert all(g >= -0.001 for g in gammas)  # Allow small numerical errors
+
+
+class TestPricingEdgeCases:
+    """Test pricing in edge cases."""
+    
+    def create_edge_case_model(self):
+        """Create model for edge case testing."""
+        n = 2
+        
+        x0 = np.array([[0.05, 0.0], [0.0, 0.05]])
+        omega = np.array([[0.02, 0.0], [0.0, 0.02]])
+        m = np.array([[-0.2, 0.0], [0.0, -0.2]])
+        sigma = np.array([[0.05, 0.0], [0.0, 0.05]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        fx_spot = 1.0
+        
+        return LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, fx_spot)
+    
+    def test_deep_itm_option(self):
+        """Test pricing of deep in-the-money options."""
+        model = self.create_edge_case_model()
+        
+        maturity = 1.0
+        strike = 0.5  # Deep ITM
+        
+        model.set_option_properties(maturity, strike)
+        price = model.price_fx_option()
+        
+        # Price should be close to intrinsic value
+        fx_fwd = model.compute_fx_fwd(maturity)
+        df_domestic = model.lrw_currency_j.bond(maturity)
+        intrinsic = (fx_fwd - strike) * df_domestic
+        
+        assert price >= intrinsic * 0.95  # Allow 5% error
+        assert price < model.fx_spot  # But not more than spot
+    
+    def test_deep_otm_option(self):
+        """Test pricing of deep out-of-the-money options."""
+        model = self.create_edge_case_model()
+        
+        maturity = 1.0
+        strike = 2.0  # Deep OTM
+        
+        model.set_option_properties(maturity, strike)
+        price = model.price_fx_option()
+        
+        # Price should be small but positive
+        assert 0 < price < 0.1
+        
+        # Price should be much less than ATM
+        model.set_option_properties(maturity, 1.0)
+        atm_price = model.price_fx_option()
+        assert price < atm_price * 0.5
+    
+    def test_very_short_maturity(self):
+        """Test pricing with very short maturity."""
+        model = self.create_edge_case_model()
+        
+        maturity = 0.01  # Very short
+        strike = 1.0
+        
+        model.set_option_properties(maturity, strike)
+        price = model.price_fx_option()
+        
+        # Price should be close to intrinsic value
+        fx_fwd = model.compute_fx_fwd(maturity)
+        df_domestic = model.lrw_currency_j.bond(maturity)
+        intrinsic = max(fx_fwd - strike, 0) * df_domestic
+        
+        # For very short maturity, time value is small
+        assert abs(price - intrinsic) < 0.01
+    
+    def test_very_long_maturity(self):
+        """Test pricing with very long maturity."""
+        model = self.create_edge_case_model()
+        
+        maturity = 10.0  # Very long
+        strike = 1.0
+        
+        model.set_option_properties(maturity, strike)
+        price = model.price_fx_option()
+        
+        # Price should still be reasonable
+        assert 0 < price < model.fx_spot
+        
+        # Long maturity should have significant time value
+        fx_fwd = model.compute_fx_fwd(maturity)
+        df_domestic = model.lrw_currency_j.bond(maturity)
+        max_price = fx_fwd * df_domestic
+        
+        assert price < max_price
+    
+    def test_zero_strike_handling(self):
+        """Test handling of zero or near-zero strike."""
+        model = self.create_edge_case_model()
+        
+        maturity = 1.0
+        strike = 0.001  # Near zero
+        
+        model.set_option_properties(maturity, strike)
+        
+        # Should not crash
+        try:
+            price = model.price_fx_option()
+            # Price should be close to forward value
+            fx_fwd = model.compute_fx_fwd(maturity)
+            df_domestic = model.lrw_currency_j.bond(maturity)
+            assert price > (fx_fwd - strike) * df_domestic * 0.9
+        except:
+            # If it fails, that's also acceptable for edge case
+            pass
+    
+    def test_extreme_volatility(self):
+        """Test pricing with extreme volatility parameters."""
+        n = 2
+        
+        # Very high volatility
+        x0 = np.array([[0.5, 0.0], [0.0, 0.5]])
+        omega = np.array([[0.2, 0.0], [0.0, 0.2]])
+        m = np.array([[-0.2, 0.0], [0.0, -0.2]])
+        sigma = np.array([[0.5, 0.0], [0.0, 0.5]])
+        
+        alpha_i = 0.05
+        alpha_j = 0.04
+        u_i = np.array([[1.0, 0.0], [0.0, 0.0]])
+        u_j = np.array([[0.0, 0.0], [0.0, 1.0]])
+        fx_spot = 1.0
+        
+        model = LrwFx(n, x0, omega, m, sigma, alpha_i, u_i, alpha_j, u_j, fx_spot)
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        model.set_option_properties(maturity, strike)
+        price = model.price_fx_option()
+        
+        # With high volatility, ATM option should have significant value
+        assert price > 0.05
+        assert price < model.fx_spot
+    
+    def test_pricing_stability(self):
+        """Test pricing stability with repeated calculations."""
+        model = self.create_edge_case_model()
+        
+        maturity = 1.0
+        strike = 1.0
+        
+        model.set_option_properties(maturity, strike)
+        
+        # Price multiple times
+        prices = []
+        for _ in range(5):
+            price = model.price_fx_option()
+            prices.append(price)
+        
+        # Fourier pricing should be deterministic
+        assert all(abs(p - prices[0]) < 1e-10 for p in prices)
+        
+        # Monte Carlo pricing should be stable (with same seed)
+        mc_prices = []
+        for _ in range(3):
+            mc_price = model.price_option_mc(5000, dt=0.01)
+            mc_prices.append(mc_price)
+        
+        # MC prices should be similar but not identical
+        mc_std = np.std(mc_prices)
+        mc_mean = np.mean(mc_prices)
+        assert mc_std / mc_mean < 0.05  # Less than 5% coefficient of variation

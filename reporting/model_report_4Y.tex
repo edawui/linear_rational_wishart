@@ -1,0 +1,668 @@
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\geometry{margin=1in}
+
+
+
+\title{LRW FX Model Calibration Report}
+\author{Model Calibration Team}
+\date{\today}
+
+\begin{document}
+
+\graphicspath{{charts/}}
+
+\maketitle
+
+\section{Summary}
+This report presents the calibrated parameters for the LRW (Linear-Rational-Wishart) FX Model across multiple calibration dates. The model is calibrated on domestic and foreign curves. For the options, 4Y tenor option data is used for the calibration.
+
+\begin{itemize}
+	\item Model details:
+	
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Model Type & LRW FX Model \\
+Dimensions (n) & 2 \\
+Jump Component & No Jump \\
+\alpha_i is equal to \alpha_j  \\
+\bottomrule
+\end{tabular}
+\caption{General model setting}
+\end{table}
+
+
+	\item details on matrix $u_i$ and $u_j$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\item 
+$\alpha_i$ and $\alpha_j$ are the same.
+
+\end{itemize}
+\section{Model Parameters by Calibration Date}
+
+\section{Model Parameters by Calibration Date}
+
+
+\subsection{March 14, 2025}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Model Type & LRW FX Model \\
+%Dimensions (n) & 2 \\
+FX Spot Rate & 1.08800 \\
+%Jump Component & No Jump \\
+$\alpha_i$ & 0.039595 \\
+$\alpha_j$ & 0.039595 \\
+\bottomrule
+\end{tabular}
+\caption{Basic Parameters for March 14, 2025}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.4955 & 0.0001 \\
+0.0001 & 0.0001
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.2658 & 0.0190 \\
+0.0190 & 0.0217
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.2653 & 0.0000 \\
+0.0000 & -0.0399
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1533 & 0.0180 \\
+0.0180 & 0.1598
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\newpage
+
+\subsection{April 01, 2025}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Model Type & LRW FX Model \\
+%Dimensions (n) & 2 \\
+FX Spot Rate & 1.07875 \\
+%Jump Component & No Jump \\
+$\alpha_i$ & 0.039595 \\
+$\alpha_j$ & 0.039595 \\
+\bottomrule
+\end{tabular}
+\caption{Basic Parameters for April 01, 2025}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.3849 & -0.0016 \\
+-0.0016 & 0.0001
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.0718 & 0.0101 \\
+0.0101 & 0.0229
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.0870 & 0.0000 \\
+0.0000 & -0.0310
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.0812 & 0.0292 \\
+0.0292 & 0.1679
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\newpage
+
+\subsection{April 15, 2025}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Model Type & LRW FX Model \\
+%Dimensions (n) & 2 \\
+FX Spot Rate & 1.12730 \\
+%Jump Component & No Jump \\
+$\alpha_i$ & 0.039595 \\
+$\alpha_j$ & 0.039595 \\
+\bottomrule
+\end{tabular}
+\caption{Basic Parameters for April 15, 2025}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.4809 & -0.0002 \\
+-0.0002 & 0.0003
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.4667 & 0.0275 \\
+0.0275 & 0.0259
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.4703 & 0.0000 \\
+0.0000 & -0.0360
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1612 & 0.0248 \\
+0.0248 & 0.2078
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\newpage
+
+\subsection{May 16, 2025}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Model Type & LRW FX Model \\
+%Dimensions (n) & 2 \\
+FX Spot Rate & 1.11525 \\
+%Jump Component & No Jump \\
+$\alpha_i$ & 0.039595 \\
+$\alpha_j$ & 0.039595 \\
+\bottomrule
+\end{tabular}
+\caption{Basic Parameters for May 16, 2025}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+1.1512 & 0.0003 \\
+0.0003 & 0.0001
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.8250 & 0.0375 \\
+0.0375 & 0.0273
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.3538 & 0.0000 \\
+0.0000 & -0.0362
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.0943 & 0.0277 \\
+0.0277 & 0.2040
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\newpage
+
+\subsection{May 30, 2025}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Model Type & LRW FX Model \\
+%Dimensions (n) & 2 \\
+FX Spot Rate & 1.13590 \\
+%Jump Component & No Jump \\
+$\alpha_i$ & 0.039595 \\
+$\alpha_j$ & 0.039595 \\
+\bottomrule
+\end{tabular}
+\caption{Basic Parameters for May 30, 2025}
+\end{table}
+
+\textbf{Initial State Vector ($x_0$):}
+$$x_0 = \begin{pmatrix}
+0.7092 & 0.0003 \\
+0.0003 & 0.0003
+\end{pmatrix}$$
+
+\textbf{Omega Matrix ($\omega$):}
+$$\omega = \begin{pmatrix}
+0.5760 & 0.0313 \\
+0.0313 & 0.0272
+\end{pmatrix}$$
+
+\textbf{Mean Reversion Matrix ($m$):}
+$$m = \begin{pmatrix}
+-0.3976 & 0.0000 \\
+0.0000 & -0.0383
+\end{pmatrix}$$
+
+\textbf{Sigma Matrix ($\sigma$):}
+$$\sigma = \begin{pmatrix}
+0.1112 & 0.0258 \\
+0.0258 & 0.2028
+\end{pmatrix}$$
+
+\textbf{u for domestic curve:}
+$$u_i = \begin{pmatrix}
+1.0000 & 0.0000 \\
+0.0000 & 0.1250
+\end{pmatrix}$$
+
+\textbf{u for foreign curve:}
+$$u_j = \begin{pmatrix}
+0.1000 & 0.0000 \\
+0.0000 & 1.0000
+\end{pmatrix}$$
+
+\newpage
+
+\section{Parameter Evolution Summary}
+
+\begin{longtable}{lccccccccccc}
+\caption{Key Parameter Evolution Over Time} \\
+\toprule
+Date & FX Spot  & $alpha_i$ & $alpha_j$ & ${x_0}_{11}$ & ${x_0}_{22}$ & $\omega_{11}$ & $\omega_{22}$ & $m_{11}$ & $m_{22}$ & $\sigma_{11}$ & $\sigma_{22}$ \\
+\midrule
+\endfirsthead
+\multicolumn{12}{c}%
+{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\toprule
+Date & FX Spot & $alpha_i$ & $alpha_j$ & ${x_0}_{11}$ & ${x_0}_{22}$ & $\omega_{11}$ & $\omega_{22}$ & $m_{11}$ & $m_{22}$ & $\sigma_{11}$ & $\sigma_{22}$ \\
+\midrule
+\endhead
+\midrule \multicolumn{12}{r}{{Continued on next page}} \\ \midrule
+\endfoot
+\bottomrule
+\endlastfoot
+03/14/2025 & 1.08800& 0.03959& 0.03959 & 0.4955 & 0.0001 & 0.2658 & 0.0217 & -0.2653 & -0.0399 & 0.1533 & 0.1598 \\
+04/01/2025 & 1.07875& 0.03959& 0.03959 & 0.3849 & 0.0001 & 0.0718 & 0.0229 & -0.0870 & -0.0310 & 0.0812 & 0.1679 \\
+04/15/2025 & 1.12730& 0.03959& 0.03959 & 0.4809 & 0.0003 & 0.4667 & 0.0259 & -0.4703 & -0.0360 & 0.1612 & 0.2078 \\
+05/16/2025 & 1.11525& 0.03959& 0.03959 & 1.1512 & 0.0001 & 0.8250 & 0.0273 & -0.3538 & -0.0362 & 0.0943 & 0.2040 \\
+05/30/2025 & 1.13590& 0.03959& 0.03959 & 0.7092 & 0.0003 & 0.5760 & 0.0272 & -0.3976 & -0.0383 & 0.1112 & 0.2028 \\
+
+\end{longtable}
+
+\section{Calibration Result Charts}
+
+This section presents the calibration results through various charts showing the yield curves and implied volatility surfaces for each calibration date.
+
+
+\subsection{Calibration Results for March 14, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_zcrate_20250314.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250314}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_price_20250314.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250314}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for March 14, 2025}
+\label{fig:domestic_curves_20250314}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_zcrate_20250314.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250314}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_price_20250314.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250314}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for March 14, 2025}
+\label{fig:foreign_curves_20250314}
+\end{figure}
+
+\subsubsection{FX Volatility Surface}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{fx_option_vol_maturity_4.00_20250314.png}
+\caption{FX Implied Volatility Surface for March 14, 2025}
+\label{fig:fx_option_vol_maturity_4.00_20250314}
+\end{figure}
+
+\vspace{1cm}
+
+
+\subsection{Calibration Results for April 01, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_zcrate_20250401.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250401}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_price_20250401.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250401}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for April 01, 2025}
+\label{fig:domestic_curves_20250401}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_zcrate_20250401.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250401}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_price_20250401.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250401}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for April 01, 2025}
+\label{fig:foreign_curves_20250401}
+\end{figure}
+
+\subsubsection{FX Volatility Surface}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{fx_option_vol_maturity_4.00_20250401.png}
+\caption{FX Implied Volatility Surface for April 01, 2025}
+\label{fig:fx_option_vol_maturity_4.00_20250401}
+\end{figure}
+
+\vspace{1cm}
+
+
+\subsection{Calibration Results for April 15, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_zcrate_20250415.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250415}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_price_20250415.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250415}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for April 15, 2025}
+\label{fig:domestic_curves_20250415}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_zcrate_20250415.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250415}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_price_20250415.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250415}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for April 15, 2025}
+\label{fig:foreign_curves_20250415}
+\end{figure}
+
+\subsubsection{FX Volatility Surface}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{fx_option_vol_maturity_4.00_20250415.png}
+\caption{FX Implied Volatility Surface for April 15, 2025}
+\label{fig:fx_option_vol_maturity_4.00_20250415}
+\end{figure}
+
+\vspace{1cm}
+
+
+\subsection{Calibration Results for May 16, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_zcrate_20250516.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250516}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_price_20250516.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250516}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for May 16, 2025}
+\label{fig:domestic_curves_20250516}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_zcrate_20250516.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250516}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_price_20250516.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250516}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for May 16, 2025}
+\label{fig:foreign_curves_20250516}
+\end{figure}
+
+\subsubsection{FX Volatility Surface}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{fx_option_vol_maturity_4.00_20250516.png}
+\caption{FX Implied Volatility Surface for May 16, 2025}
+\label{fig:fx_option_vol_maturity_4.00_20250516}
+\end{figure}
+
+\vspace{1cm}
+
+
+\subsection{Calibration Results for May 30, 2025}
+
+\subsubsection{Domestic Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_zcrate_20250530.png}
+\caption{Zero Rate Curve}
+\label{fig:Domestic_bonds_zcrate_20250530}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Domestic_bonds_price_20250530.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Domestic_bonds_price_20250530}
+\end{subfigure}
+\caption{Domestic Curve Calibration Results for May 30, 2025}
+\label{fig:domestic_curves_20250530}
+\end{figure}
+
+\subsubsection{Foreign Curve Analysis}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_zcrate_20250530.png}
+\caption{Zero Rate Curve}
+\label{fig:Foreign_bonds_zcrate_20250530}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{Foreign_bonds_price_20250530.png}
+\caption{Zero Coupon Bond Price Curve}
+\label{fig:Foreign_bonds_price_20250530}
+\end{subfigure}
+\caption{Foreign Curve Calibration Results for May 30, 2025}
+\label{fig:foreign_curves_20250530}
+\end{figure}
+
+\subsubsection{FX Volatility Surface}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{fx_option_vol_maturity_4.00_20250530.png}
+\caption{FX Implied Volatility Surface for May 30, 2025}
+\label{fig:fx_option_vol_maturity_4.00_20250530}
+\end{figure}
+
+\vspace{1cm}
+
+
+
+
+\end{document}

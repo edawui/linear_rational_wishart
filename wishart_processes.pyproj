@@ -1,0 +1,196 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>6909ed20-efc6-4fb1-b039-8f69571bf8cd</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>examples\lrw_basic_examples.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>wishart_processes</Name>
+    <RootNamespace>wishart_processes</RootNamespace>
+    <InterpreterId>CondaEnv|CondaEnv|jax_env</InterpreterId>
+    <TestFramework>Pytest</TestFramework>
+    <UnitTestPattern>test*.py</UnitTestPattern>
+    <UnitTestRootDirectory>.</UnitTestRootDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="calibration\alpha_curve.py" />
+    <Compile Include="calibration\fx\__init__.py" />
+    <Compile Include="calibration\pseudo_inverse.py" />
+    <Compile Include="calibration\__init__.py" />
+    <Compile Include="calibration\interpolation.py" />
+    <Compile Include="calibration\calibration_parameter_utils.py" />
+    <Compile Include="calibration\calibration_reporting.py" />
+    <Compile Include="calibration\constraints.py" />
+    <Compile Include="calibration\fx\base.py" />
+    <Compile Include="calibration\fx\objectives.py" />
+    <Compile Include="calibration\fx\optimizers.py" />
+    <Compile Include="calibration\fx\fx_lrw_calibrator.py" />
+    <Compile Include="calibration\lrw_calibration.py" />
+    <Compile Include="calibration\lrw_jump_calibrator.py" />
+    <Compile Include="calibration\market_data_handler.py" />
+    <Compile Include="calibration\objectives.py" />
+    <Compile Include="components\jump.py" />
+    <Compile Include="components\__init__.py" />
+    <Compile Include="config\constants.py" />
+    <Compile Include="config\__init__.py" />
+    <Compile Include="core\base.py" />
+    <Compile Include="core\expectations.py" />
+    <Compile Include="core\wishart.py" />
+    <Compile Include="core\wishart_jump.py" />
+    <Compile Include="core\__init__.py" />
+    <Compile Include="curves\iborcurve_jax.py" />
+    <Compile Include="curves\oiscurve_jax.py" />
+    <Compile Include="curves\__init__.py" />
+    <Compile Include="data\data_fx_market_data.py" />
+    <Compile Include="data\data_helpers.py" />
+    <Compile Include="data\data_market_data.py" />
+    <Compile Include="data\market_repricing_bond.py" />
+    <Compile Include="data\market_repricing_option.py" />
+    <Compile Include="data\__init__.py" />
+    <Compile Include="enums\pricing_approaches.py" />
+    <Compile Include="enums\__init__.py" />
+    <Compile Include="examples\fx_calibration\fx_volatility_smile_analysis.py" />
+    <Compile Include="examples\fx_calibration\lrw_fx_calibration_example.py" />
+    <Compile Include="examples\fx_calibration\temp.py" />
+    <Compile Include="examples\lrw-usage-example.py" />
+    <Compile Include="examples\lrw_jump_basic_examples.py" />
+    <Compile Include="examples\lrw_basic_examples.py" />
+    <Compile Include="examples\lrw_calibration_examples.py" />
+    <Compile Include="examples\lrw_jump_calibration_example.py" />
+    <Compile Include="examples\lrw_sensitivity_examples.py" />
+    <Compile Include="examples\run_all_examples.py" />
+    <Compile Include="examples\set_path.py" />
+    <Compile Include="examples\wishart-package-init.py" />
+    <Compile Include="examples\__init__.py" />
+    <Compile Include="math\decompositions.py" />
+    <Compile Include="math\operators.py" />
+    <Compile Include="math\psd_corrections.py" />
+    <Compile Include="core\derivatives.py" />
+    <Compile Include="math\__init__.py" />
+    <Compile Include="models\fx\base.py" />
+    <Compile Include="models\fx\currency_basket.py" />
+    <Compile Include="models\fx\lrw_fx.py" />
+    <Compile Include="models\fx\__init__.py" />
+    <Compile Include="models\interest_rate\base.py" />
+    <Compile Include="models\interest_rate\config.py" />
+    <Compile Include="models\interest_rate\lrw_model.py" />
+    <Compile Include="models\interest_rate\lrw_sensitivities.py" />
+    <Compile Include="models\interest_rate\__init__.py" />
+    <Compile Include="models\__init__.py" />
+    <Compile Include="others\generate_pdf_report.py" />
+    <Compile Include="pricing\fx\base.py" />
+    <Compile Include="pricing\fx\fourier_fx_pricer.py" />
+    <Compile Include="pricing\fx\mc_fx_pricer.py" />
+    <Compile Include="pricing\fx\__init__.py" />
+    <Compile Include="pricing\mc_pricer.py" />
+    <Compile Include="pricing\swaption\collin_dufresne.py" />
+    <Compile Include="pricing\swaption\fourier_pricing.py" />
+    <Compile Include="pricing\swaption\gamma_approximation.py" />
+    <Compile Include="pricing\bachelier.py" />
+    <Compile Include="pricing\black_scholes.py" />
+    <Compile Include="pricing\implied_vol_black_scholes.py" />
+    <Compile Include="pricing\jackel_method.py" />
+    <Compile Include="pricing\jax_implementations.py" />
+    <Compile Include="pricing\swaption\base.py" />
+    <Compile Include="pricing\swaption\__init__.py" />
+    <Compile Include="pricing\swaption_pricer.py" />
+    <Compile Include="pricing\expectations_moved_to_core.py" />
+    <Compile Include="core\phi_functions.py" />
+    <Compile Include="pricing\__init__.py" />
+    <Compile Include="reporting\create_report - Copy %282%29.py" />
+    <Compile Include="reporting\create_report_new_all - Copy.py" />
+    <Compile Include="reporting\create_report_new_all.py" />
+    <Compile Include="reporting\create_report.py" />
+    <Compile Include="scripts\run_lrw_example.py" />
+    <Compile Include="sensitivities\greeks.py" />
+    <Compile Include="sensitivities\vega_calculations.py" />
+    <Compile Include="sensitivities\delta_hedging.py" />
+    <Compile Include="sensitivities\__init__.py" />
+    <Compile Include="simulation\alfonsi.py" />
+    <Compile Include="simulation\cir.py" />
+    <Compile Include="simulation\euler_maruyama.py" />
+    <Compile Include="simulation\jax_implementations.py" />
+    <Compile Include="simulation\sampling.py" />
+    <Compile Include="simulation\schemas.py" />
+    <Compile Include="simulation\utils.py" />
+    <Compile Include="simulation\__init__.py" />
+    <Compile Include="tests\test_bachelier.py" />
+    <Compile Include="tests\test_market_data.py" />
+    <Compile Include="tests\__init__.py" />
+    <Compile Include="utils\calibration_reporting.py" />
+    <Compile Include="utils\jax_optimizations.py" />
+    <Compile Include="utils\jax_utils.py" />
+    <Compile Include="utils\local_functions.py" />
+    <Compile Include="utils\reporting.py" />
+    <Compile Include="utils\benchmarking.py" />
+    <Compile Include="utils\density_approximation.py" />
+    <Compile Include="utils\__init__.py" />
+    <Compile Include="__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="calibration\" />
+    <Folder Include="calibration\fx\" />
+    <Folder Include="calibration\market_repricing\" />
+    <Folder Include="components\" />
+    <Folder Include="config\" />
+    <Folder Include="core\" />
+    <Folder Include="curves\" />
+    <Folder Include="data\" />
+    <Folder Include="enums\" />
+    <Folder Include="examples\" />
+    <Folder Include="examples\fx_calibration\" />
+    <Folder Include="math\" />
+    <Folder Include="models\" />
+    <Folder Include="models\fx\" />
+    <Folder Include="models\interest_rate\" />
+    <Folder Include="reporting\" />
+    <Folder Include="scripts\" />
+    <Folder Include="others\" />
+    <Folder Include="pricing\" />
+    <Folder Include="pricing\fx\" />
+    <Folder Include="pricing\swaption\" />
+    <Folder Include="sensitivities\" />
+    <Folder Include="simulation\" />
+    <Folder Include="tests\" />
+    <Folder Include="tests\test_fx_calibration\" />
+    <Folder Include="utils\" />
+    <Folder Include="utils\calibration\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="others\alpha_refactoring.pdf" />
+    <Content Include="others\Comprehensive Wishart Process Package Refactoring Report.docx" />
+    <Content Include="others\lrw_IR_bru_refactoring.pdf" />
+    <Content Include="others\README.md" />
+    <Content Include="others\refactoring_plan_updated.pdf" />
+    <Content Include="others\refactoring_plan_version_4.pdf" />
+    <Content Include="others\refactoring_plan_version_9.pdf" />
+    <Content Include="others\refactoring_summary.pdf" />
+    <Content Include="others\wishart_mc.pdf" />
+    <Content Include="others\wishart_mc_refactoring_report.pdf" />
+    <Content Include="tests\test_fx_calibration\test_fx_model.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="CondaEnv|CondaEnv|jax_env" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>
