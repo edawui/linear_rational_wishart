@@ -25,4 +25,4 @@ __all__ = [
 
 # Note: Submodules are not imported automatically to avoid circular imports.
 # Import them explicitly when needed:
-# from wishart_processes.module import ClassName
+# from linear_rational_wishart.module import ClassName

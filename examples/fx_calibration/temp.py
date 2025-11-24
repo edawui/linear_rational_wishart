@@ -1,4 +1,4 @@
-﻿import csv
+import csv
 import json
 import pandas as pd
 import math
@@ -72,7 +72,7 @@ def csv_to_json():
     with open(output_file, 'w') as jsonfile:
         json.dump(data, jsonfile, indent=2)
     
-    print(f"✅ Converted {len(data)} records")
+    print(f"? Converted {len(data)} records")
 
 def list_files_starting_with(  
                             folder =r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\wishart_processes\results\Result_all_tenors_v2"

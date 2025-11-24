@@ -1,4 +1,4 @@
-﻿"""
+"""
 Swaption pricing methods for LRW models.
 
 This module provides various pricing methods for swaptions under the
@@ -982,7 +982,7 @@ class LRWSwaptionPricer:
             swaption_config.maturity = current_maturity
         
             for path in range(nb_mc):
-                # ✅ RECREATE PRICER EVERY 50 PATHS to prevent memory accumulation
+                # ? RECREATE PRICER EVERY 50 PATHS to prevent memory accumulation
                 if path % batch_size == 0:
                     # Clean up old pricer
                     if pricer is not None:

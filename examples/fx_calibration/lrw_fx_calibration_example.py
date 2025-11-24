@@ -1,4 +1,4 @@
-﻿# from optparse import Option
+# from optparse import Option
 # from Sympy.logic.boolalg import true
 # from Sympy.core.cache import USE_CACHE
 # from Sympy.plotting.pygletplot.util import model_to_screen
@@ -94,18 +94,18 @@ except ImportError:
     sys.path.insert(0, project_root)
 
 
-    from wishart_processes.data.data_helpers  import * 
-    from wishart_processes.data.data_fx_market_data  import CurrencyPairDailyData
-    from wishart_processes.calibration.fx.fx_lrw_calibrator import LrwFxCalibrator
-    from wishart_processes.calibration.fx.base import CalibrationConfig,OptimizationMethod, CalibrationResult
+    from linear_rational_wishart.data.data_helpers  import * 
+    from linear_rational_wishart.data.data_fx_market_data  import CurrencyPairDailyData
+    from linear_rational_wishart.calibration.fx.fx_lrw_calibrator import LrwFxCalibrator
+    from linear_rational_wishart.calibration.fx.base import CalibrationConfig,OptimizationMethod, CalibrationResult
 
-    from wishart_processes.models.fx.base import BaseFxModel
-    from wishart_processes.models.fx.lrw_fx import LRWFxModel 
-    from wishart_processes.models.fx.currency_basket import CurrencyBasket
-    from wishart_processes.pricing.fx.fourier_fx_pricer import FourierFxPricer
-    from wishart_processes.pricing.fx.mc_fx_pricer import MonteCarloFxPricer   
-    from wishart_processes.pricing.implied_vol_black_scholes import * 
-    from wishart_processes.pricing.black_scholes import * 
+    from linear_rational_wishart.models.fx.base import BaseFxModel
+    from linear_rational_wishart.models.fx.lrw_fx import LRWFxModel 
+    from linear_rational_wishart.models.fx.currency_basket import CurrencyBasket
+    from linear_rational_wishart.pricing.fx.fourier_fx_pricer import FourierFxPricer
+    from linear_rational_wishart.pricing.fx.mc_fx_pricer import MonteCarloFxPricer   
+    from linear_rational_wishart.pricing.implied_vol_black_scholes import * 
+    from linear_rational_wishart.pricing.black_scholes import * 
 
 # matplotlib.use('TkAgg')  # or 'Qt5Agg'
 # # Enable interactive mode globally
@@ -1029,8 +1029,8 @@ if __name__=="__main__":
     ## for 20250530 curve model from the file and sigma =[0.12033281 0.1614329 ] with correl rho_sigma,rho_x0,rho_omega=0.25,-0.25,0.25 for tenor =4.0--> Good result
     ## other sigma and correl [0.11491546 0.19085651 0.25  
     # case option_calib_set --> 7
-    #--Resutl  x0[0,1]: -0.250000 → -0.211286 (+15.49%)
-      # omega[0,1]: 0.250000 → -0.228871 (-191.55%)
-      # sigma[0,0]: 0.344538 → 0.093263 (-72.93%)
-      # sigma[1,1]: 0.344538 → 0.179188 (-47.99%)
-      # sigma[0,1]: 0.250000 → 0.250000 (-0.00%)
+    #--Resutl  x0[0,1]: -0.250000 ? -0.211286 (+15.49%)
+      # omega[0,1]: 0.250000 ? -0.228871 (-191.55%)
+      # sigma[0,0]: 0.344538 ? 0.093263 (-72.93%)
+      # sigma[1,1]: 0.344538 ? 0.179188 (-47.99%)
+      # sigma[0,1]: 0.250000 ? 0.250000 (-0.00%)

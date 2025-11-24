@@ -5,7 +5,7 @@ Unit tests for Black-Scholes pricing model.
 import numpy as np
 import pytest
 
-from wishart_processes.pricing import (
+from linear_rational_wishart.pricing import (
     black_scholes_price,
     black_scholes_price_forward,
     black_scholes_price_fx,
@@ -16,7 +16,7 @@ from wishart_processes.pricing import (
     implied_volatility_black_scholes,
     implied_volatility_smile
 )
-from wishart_processes.utils import is_jax_available
+from linear_rational_wishart.utils import is_jax_available
 
 
 class TestBlackScholesPricing:

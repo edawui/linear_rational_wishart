@@ -52,8 +52,8 @@ from ..config import constants
 #     print(f"Using project root: {project_root}")
 #     sys.path.insert(0, project_root)
 
-#     from wishart_processes.data.data_helpers import *
-#     from wishart_processes.data.data_market_data import * 
+#     from linear_rational_wishart.data.data_helpers import *
+#     from linear_rational_wishart.data.data_market_data import * 
 
   #endregion
    

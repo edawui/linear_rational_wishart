@@ -19,11 +19,11 @@ try:
 except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-    from wishart_processes.components.jump  import JumpComponent
-    from wishart_processes.models.interest_rate.config import SwaptionConfig, LRWModelConfig
-    from wishart_processes.models.interest_rate.lrw_model import LRWModel
-    from wishart_processes.pricing.swaption_pricer import LRWSwaptionPricer
-    from wishart_processes.utils.reporting import print_pretty
+    from linear_rational_wishart.components.jump  import JumpComponent
+    from linear_rational_wishart.models.interest_rate.config import SwaptionConfig, LRWModelConfig
+    from linear_rational_wishart.models.interest_rate.lrw_model import LRWModel
+    from linear_rational_wishart.pricing.swaption_pricer import LRWSwaptionPricer
+    from linear_rational_wishart.utils.reporting import print_pretty
 
 
 from lrw_jump_basic_examples import *

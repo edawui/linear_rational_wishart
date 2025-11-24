@@ -10,9 +10,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from lrw_numpy.LrwInterestRateBru import LrwInterestRateBru
-from wishart_processes.calibration.lrw_calibration import LRWCalibrator
-from wishart_processes.pricing import LRWSwaptionPricer
-from wishart_processes.utils.reporting import print_pretty
+from linear_rational_wishart.calibration.lrw_calibration import LRWCalibrator
+from linear_rational_wishart.pricing import LRWSwaptionPricer
+from linear_rational_wishart.utils.reporting import print_pretty
 
 
 def example_curve_calibration():

@@ -26,9 +26,9 @@ print(f"Using project root: {project_root}")
 sys.path.insert(0, project_root)
 
 
-from wishart_processes.calibration import get_initial_alpha, InitialCurveAlpha
-from wishart_processes.calibration.interpolation import create_interpolator
-from wishart_processes.utils.jax_utils import is_jax_available
+from linear_rational_wishart.calibration import get_initial_alpha, InitialCurveAlpha
+from linear_rational_wishart.calibration.interpolation import create_interpolator
+from linear_rational_wishart.utils.jax_utils import is_jax_available
 
 
 class TestGetInitialAlpha:

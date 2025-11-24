@@ -7,12 +7,12 @@ import jax.numpy as jnp
 import numpy as np
 
 # Import configurations
-from wishart_processes.models.interest_rate.config import (
+from linear_rational_wishart.models.interest_rate.config import (
     LRWModelConfig, SwaptionConfig, PricingConfig, HedgingConfig
 )
 
 # Import models and pricers
-from wishart_processes.models.interest_rate.lrw_model import LRWModel
+from linear_rational_wishart.models.interest_rate.lrw_model import LRWModel
 from lrw_numpy.LrwInterestRateJump import PricingApproach
 from ..sensitivities.lrw-greeks-calculator_INCOMPLETE import LRWGreeksCalculator
 

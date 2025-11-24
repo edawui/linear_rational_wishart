@@ -1,4 +1,4 @@
-﻿
+
 
 # pricing/swaption/fourier_pricing.py
 """Fourier transform methods for swaption pricing."""
@@ -25,7 +25,7 @@ import numpy as np
 def gauss_legendre_integral(f, a, b, n=32):
     # """
     # Integrate f over [a,b] using n-point Gauss-Legendre quadrature.
-    # Calls f only with scalar inputs — safe for non-vectorized integrands.
+    # Calls f only with scalar inputs � safe for non-vectorized integrands.
     # """
     x, w = np.polynomial.legendre.leggauss(n)
 
@@ -226,7 +226,7 @@ class FourierPricer(BaseSwaptionPricer):
     def price_with_intervals_new(self, intervals=None):
         self.validate_inputs()
 
-        # fewer intervals → fewer quad calls
+        # fewer intervals ? fewer quad calls
         if intervals is None:
             intervals = np.linspace(0.0, self.nmax, 4).tolist()  
             # only 3 integrals instead of 5 or 6

@@ -11,10 +11,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-from wishart_processes.models.interest_rate import LRWModel
-from wishart_processes.calibration import LRWJumpCalibrator, CalibrationConfig
-from wishart_processes.data import MarketData
-from wishart_processes.utils.reporting import print_pretty
+from linear_rational_wishart.models.interest_rate import LRWModel
+from linear_rational_wishart.calibration import LRWJumpCalibrator, CalibrationConfig
+from linear_rational_wishart.data import MarketData
+from linear_rational_wishart.utils.reporting import print_pretty
 
 
 def example_basic_calibration():

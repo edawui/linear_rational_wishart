@@ -26,13 +26,13 @@ if os.path.basename(project_root) != "LinearRationalWishart_NewCode":
 print(f"Using project root: {project_root}")
 sys.path.insert(0, project_root)
 
-from wishart_processes.data.data_fx_market_data import *
-from wishart_processes.data.data_helper import *
-from wishart_processes.data.data_init import *
-from wishart_processes.data.data_market_data import *
+from linear_rational_wishart.data.data_fx_market_data import *
+from linear_rational_wishart.data.data_helper import *
+from linear_rational_wishart.data.data_init import *
+from linear_rational_wishart.data.data_market_data import *
 
 # (
-# from wishart_processes.data import (
+# from linear_rational_wishart.data import (
 #     RateData,
 #     SwaptionData,
 #     DailyData,
@@ -318,7 +318,7 @@ class TestCurrencyPairData:
         foreign_data = DailyData(date, "EUR", empty_df, empty_df, empty_df)
         
         # Create mock FX vol data with spot
-        from wishart_processes.data import RawFxVolData, FxVolDataType
+        from linear_rational_wishart.data import RawFxVolData, FxVolDataType
         
         raw_fx_vol = RawFxVolData(date, 1.1234, "1M", 0.08, 0.25, FxVolDataType.ATM)
         fx_vol_df = pd.DataFrame([{'Object': raw_fx_vol}])

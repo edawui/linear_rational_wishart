@@ -9,9 +9,9 @@ import jax.numpy as jnp
 import numpy as np
 from numpy.testing import assert_allclose
 
-from wishart_processes.models.interest_rate import LrwInterestRateBru
-from wishart_processes.models.interest_rate.lrw_sensitivities import LRWSensitivityAnalyzer
-from wishart_processes.pricing import LRWSwaptionPricer
+from linear_rational_wishart.models.interest_rate import LrwInterestRateBru
+from linear_rational_wishart.models.interest_rate.lrw_sensitivities import LRWSensitivityAnalyzer
+from linear_rational_wishart.pricing import LRWSwaptionPricer
 
 
 class TestLRWSensitivities:
@@ -496,7 +496,7 @@ class TestCalibrationIntegration:
     
     def test_calibrated_model_sensitivities(self):
         """Test sensitivities after curve calibration."""
-        from wishart_processes.calibration.lrw_calibration import LRWCalibrator
+        from linear_rational_wishart.calibration.lrw_calibration import LRWCalibrator
         
         # Create model
         n = 2

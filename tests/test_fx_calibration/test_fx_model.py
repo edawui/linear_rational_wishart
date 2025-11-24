@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
 
-from wishart_processes.models.fx import LrwFx
-from wishart_processes.models.interest_rate import LrwInterestRateBru
+from linear_rational_wishart.models.fx import LrwFx
+from linear_rational_wishart.models.interest_rate import LrwInterestRateBru
 
 
 class TestLrwFxModel:

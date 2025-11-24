@@ -1,4 +1,4 @@
-﻿"""
+"""
 Main LRW interest rate model implementation.
 
 models/interest_rate/lrw_model.py
@@ -518,7 +518,7 @@ class LRWModel(BaseInterestRateModel):
         bond_prices_t = self.bond_vectorized(maturities)
         bond_prices_t_plus_tenor = self.bond_vectorized(maturities + tenor)
         
-        # Forward rate: f(t) = -d(ln P(t))/dt ≈ -(ln P(t+dt) - ln P(t))/dt
+        # Forward rate: f(t) = -d(ln P(t))/dt � -(ln P(t+dt) - ln P(t))/dt
         forward_rates = -(np.log(bond_prices_t_plus_tenor) - np.log(bond_prices_t)) / tenor
         
         return forward_rates

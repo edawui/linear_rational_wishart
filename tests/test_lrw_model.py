@@ -10,8 +10,8 @@ import jax.numpy as jnp
 import numpy as np
 from numpy.testing import assert_allclose
 
-from wishart_processes.models.interest_rate import LrwInterestRateBru
-from wishart_processes.utils.jax_utils import is_jax_available
+from linear_rational_wishart.models.interest_rate import LrwInterestRateBru
+from linear_rational_wishart.utils.jax_utils import is_jax_available
 
 
 class TestLRWModel:
@@ -273,7 +273,7 @@ class TestLRWUtilities:
     
     def test_vec_operations(self):
         """Test Vec and VecInv operations."""
-        from wishart_processes.utils.local_functions import Vec, VecInv
+        from linear_rational_wishart.utils.local_functions import Vec, VecInv
         
         u = jnp.array([[1, 2], [4, 5]])
         vec_u = Vec(u)
@@ -284,7 +284,7 @@ class TestLRWUtilities:
         
     def test_trace_operations(self):
         """Test trace operations."""
-        from wishart_processes.utils.local_functions import TrUV
+        from linear_rational_wishart.utils.local_functions import TrUV
         
         u = jnp.array([[1, 2], [3, 4]])
         v = jnp.array([[5, 6], [7, 8]])

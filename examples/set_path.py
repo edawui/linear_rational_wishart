@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 from pathlib import Path
 
@@ -52,7 +52,7 @@ def complete_setup():
     # 5. NOW import constants (will read env vars)
     import constants
     
-    print(f"✅ Setup complete - constants.project_root: {constants.project_root}")
+    print(f"? Setup complete - constants.project_root: {constants.project_root}")
     
     return project_root, mkt_data_folder
 

@@ -26,9 +26,9 @@ if os.path.basename(project_root) != "LinearRationalWishart_NewCode":
 print(f"Using project root: {project_root}")
 sys.path.insert(0, project_root)
 
-from wishart_processes.pricing.bachelier import bachelier_price, bachelier_delta, bachelier_vega,implied_normal_volatility
-from wishart_processes.pricing.jackel_method import JackelImpliedVolatility
-from wishart_processes.utils.jax_utils import is_jax_available
+from linear_rational_wishart.pricing.bachelier import bachelier_price, bachelier_delta, bachelier_vega,implied_normal_volatility
+from linear_rational_wishart.pricing.jackel_method import JackelImpliedVolatility
+from linear_rational_wishart.utils.jax_utils import is_jax_available
 
 
 class TestBachelierPricing:

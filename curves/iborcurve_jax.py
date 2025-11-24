@@ -52,10 +52,10 @@ from ..config import constants
 #     print(f"Using project root: {project_root}")
 #     sys.path.insert(0, project_root)
 
-#     from wishart_processes.models.interest_rate.lrw_model import LRWModel 
-#     from wishart_processes.data.data_helpers import *
-#     from wishart_processes.data.data_market_data import * 
-#     from wishart_processes.curves.oiscurve_jax import *
+#     from linear_rational_wishart.models.interest_rate.lrw_model import LRWModel 
+#     from linear_rational_wishart.data.data_helpers import *
+#     from linear_rational_wishart.data.data_market_data import * 
+#     from linear_rational_wishart.curves.oiscurve_jax import *
 #endregion
 
 # JAX-optimized utility functions

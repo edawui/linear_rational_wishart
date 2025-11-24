@@ -49,13 +49,13 @@ except ImportError:
     sys.path.insert(0, project_root)
 
 
-    from wishart_processes.models.fx.base import BaseFxModel
-    from wishart_processes.models.fx.lrw_fx import LRWFxModel 
-    from wishart_processes.models.fx.currency_basket import CurrencyBasket
-    from wishart_processes.pricing.fx.fourier_fx_pricer import FourierFxPricer
-    from wishart_processes.pricing.fx.mc_fx_pricer import MonteCarloFxPricer   
-    from wishart_processes.pricing.implied_vol_black_scholes import * 
-    from wishart_processes.pricing.black_scholes import * 
+    from linear_rational_wishart.models.fx.base import BaseFxModel
+    from linear_rational_wishart.models.fx.lrw_fx import LRWFxModel 
+    from linear_rational_wishart.models.fx.currency_basket import CurrencyBasket
+    from linear_rational_wishart.pricing.fx.fourier_fx_pricer import FourierFxPricer
+    from linear_rational_wishart.pricing.fx.mc_fx_pricer import MonteCarloFxPricer   
+    from linear_rational_wishart.pricing.implied_vol_black_scholes import * 
+    from linear_rational_wishart.pricing.black_scholes import * 
 
 matplotlib.use('TkAgg')  # or 'Qt5Agg'
 

@@ -1,0 +1,60 @@
+You Now Have Two Repos:
+
+lr-wishart-all - Your full folder structure
+lr-wishart - Just the wishart_processes folder (the one you wanted)
+
+
+Going Forward - How to Push Updates:
+When you make changes to your code:
+
+Navigate to your folder (if not already there):
+
+bash   cd "E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\wishart_processes"
+
+Add and commit changes:
+
+bash   git add .
+   git commit -m "Description of what you changed"
+
+Push to GitHub:
+
+bash   git push
+That's it! Your GitHub repo will stay up to date.
+
+Tip: Before running git add ., close Visual Studio to avoid those permission errors with .vs files.
+Congrats on getting everything set up! 🚀
+
+
+=======================
+cd "E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\wishart_processes"
+
+
+General Workflow:
+If you edit on GitHub → Pull to PC:
+bash git pull
+If you edit on PC → Push to GitHub:
+bash git add .
+git commit -m "Your message"
+git push
+
+Pro Tip: Always git pull before you start working on your PC to make sure you have the latest version!
+
+
+==================================================================================================
+==================================================================================================
+Recommended Workflow with Drive:
+
+First Time:
+python
+from google.colab import drive
+drive.mount('/content/drive')
+%cd /content/drive/MyDrive
+!git clone https://github.com/edawui/lr-wishart.git
+%cd lr-wishart
+
+Every Other Time:
+python
+from google.colab import drive
+drive.mount('/content/drive')
+%cd /content/drive/MyDrive/lr-wishart
+!git pull

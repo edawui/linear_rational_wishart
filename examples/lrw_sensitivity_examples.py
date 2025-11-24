@@ -17,9 +17,9 @@ main_project_root = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\Lin
 
 
 # from lrw_numpy.LrwInterestRateBru import LrwInterestRateBru
-# from wishart_processes.models.interest_rate.lrw_sensitivities import LRWSensitivityAnalyzer
-# from wishart_processes.pricing import LRWSwaptionPricer
-# from wishart_processes.utils.reporting import print_pretty, export_results, SensitivityReporter
+# from linear_rational_wishart.models.interest_rate.lrw_sensitivities import LRWSensitivityAnalyzer
+# from linear_rational_wishart.pricing import LRWSwaptionPricer
+# from linear_rational_wishart.utils.reporting import print_pretty, export_results, SensitivityReporter
 
 try:
     from ..models.interest_rate.config import SwaptionConfig, LRWModelConfig
@@ -31,12 +31,12 @@ try:
 except ImportError:
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-    from wishart_processes.components.jump  import JumpComponent
-    from wishart_processes.models.interest_rate.config import SwaptionConfig, LRWModelConfig
-    from wishart_processes.models.interest_rate.lrw_model import LRWModel
-    from wishart_processes.pricing.swaption_pricer import LRWSwaptionPricer
-    from wishart_processes.models.interest_rate.lrw_sensitivities import LRWSensitivityAnalyzer
-    from wishart_processes.utils.reporting import print_pretty, export_results, SensitivityReporter
+    from linear_rational_wishart.components.jump  import JumpComponent
+    from linear_rational_wishart.models.interest_rate.config import SwaptionConfig, LRWModelConfig
+    from linear_rational_wishart.models.interest_rate.lrw_model import LRWModel
+    from linear_rational_wishart.pricing.swaption_pricer import LRWSwaptionPricer
+    from linear_rational_wishart.models.interest_rate.lrw_sensitivities import LRWSensitivityAnalyzer
+    from linear_rational_wishart.utils.reporting import print_pretty, export_results, SensitivityReporter
 
 
 

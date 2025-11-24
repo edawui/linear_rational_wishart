@@ -1,4 +1,4 @@
-﻿
+
 
 
 
@@ -80,10 +80,10 @@ class EdgeworthApproximation:
         """Convert moments to cumulants."""
         # First few cumulants
         if len(self.mu) > 0:
-            self.cumulants.append(self.mu[0])  # κ₁ = μ₁
+            self.cumulants.append(self.mu[0])  # ?1 = �1
             
         if len(self.mu) > 1:
-            self.cumulants.append(self.mu[1] - self.mu[0]**2)  # κ₂ = μ₂ - μ₁²
+            self.cumulants.append(self.mu[1] - self.mu[0]**2)  # ?2 = �2 - �1�
             
         if len(self.mu) > 2:
             self.cumulants.append(self.mu[2] - 3*self.mu[1]*self.mu[0] + 2*self.mu[0]**3)
