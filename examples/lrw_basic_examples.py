@@ -886,6 +886,7 @@ if __name__ == "__main__":
     # example_wishart_properties() #ok working
     
     # example_swap_exposure()
+    print("=========================Swaption exposure testing======================================")
     example_swaption_exposure()
 
     # Keep all plots open
