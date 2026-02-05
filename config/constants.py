@@ -4,6 +4,11 @@ Global constants and configuration for the Wishart processes package.
 import jax
 import os
 import sys
+from pathlib import Path
+
+
+class Constants_todo:
+    FAST_SWAPTION_PRICING= False
 
 # Enable 64-bit precision for JAX (needed for financial applications)
 jax.config.update("jax_enable_x64", True)
@@ -11,27 +16,30 @@ jax.config.update("jax_enable_x64", True)
 # project_root = r"Test_E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
 # mkt_data_folder = r"Test_E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\wishart_processes\mkt_data\Data_new"
 
+# mkt_data_folder
 
-
-# Check for forced paths from environment
-forced_root = os.environ.get('FORCE_PROJECT_ROOT')
-if forced_root:
-    project_root = forced_root
-    mkt_data_folder = os.environ.get('FORCE_MKT_DATA_FOLDER')
-else:
-    # Your existing auto-detection code
-    if 'google.colab' in sys.modules:
-         try:
-            from google.colab import drive
-            drive.mount('/content/drive')
-         except:
-            pass
+# PACKAGE_ROOT = Path(__file__).parent.resolve().parent.resolve()
+PACKAGE_ROOT = Path(__file__).parent.parent.resolve()
+MKT_DATA_FOLDER = str(PACKAGE_ROOT / "mkt_data" / "Data_new")
+# # Check for forced paths from environment
+# forced_root = os.environ.get('FORCE_PROJECT_ROOT')
+# if forced_root:
+#     project_root = forced_root
+#     mkt_data_folder = os.environ.get('FORCE_MKT_DATA_FOLDER')
+# else:
+#     # Your existing auto-detection code
+#     if 'google.colab' in sys.modules:
+#          try:
+#             from google.colab import drive
+#             drive.mount('/content/drive')
+#          except:
+#             pass
         
-         project_root = "/content/drive/MyDrive/LinearRationalWishart_Work/Code/ED/LinearRationalWishart/LinearRationalWishart_NewCode"
+#          project_root = "/content/drive/MyDrive/LinearRationalWishart_Work/Code/ED/LinearRationalWishart/LinearRationalWishart_NewCode"
 
-    else:
-        project_root = r"TEST E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
-    mkt_data_folder = os.path.join(project_root, "wishart_processes", "mkt_data", "Data_new")
+#     else:
+#         project_root = r"TEST E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
+#     mkt_data_folder = os.path.join(project_root, "wishart_processes", "mkt_data", "Data_new")
 
         # ... rest of your code
 
@@ -66,17 +74,36 @@ else:
 
 ##FFT pricing constants--- Workers
 
-EXPOSURE_SWAPTION_WORKERS=10
-FFT_SWAPTION_NB_INTERVALS=4
-FFT_SWAPTION_PRICING_WORKERS=4
-# Numerical constants
+NEURAL_NETWORK_MODEL_FOLDER= r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\Output_results\neural_operator\saved_models\models_complex\final"
+NORM_STATS_PATH = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\Output_results\neural_operator\saved_models\normalization_stats_complex.npz"
+# str(PACKAGE_ROOT / "mkt_data" / "normalization_stats")
+# str(PACKAGE_ROOT / "neural_operator" / "saved_models" / "models" / "final")
+# FAST_SWAPTION_PRICING= True#False##his is mainly  calibation
+# FAST_SWAPTION_PRICING= False
+
+EXPOSURE_SWAPTION_WORKERS=50
+FFT_SWAPTION_NB_INTERVALS=5#10#4
+FFT_SWAPTION_PRICING_WORKERS=1#4
+INTEG_NB_POINTS=30#50#100
+
 EPSABS = 1e-7
 EPSREL = 1e-04
-NMAX = 5 #10#1000#100#1000#25#50#
-DEFAULT_INTEGRATION_POINTS =15#20#50## 100
+##this ok for calibration NMAX =10 ##2.5# 5 #10#1000#100#1000#25#50# looks like 2.5 is good enough
+NMAX =25#500#25#10#1000 ##2.5# 5 #10#1000#100#1000#25#50# looks like 2.5 is good enough
+DEFAULT_INTEGRATION_POINTS =10#15#20#50## 100
 DEFAULT_EPSILON = 1e-8
 UR=0.5
-COMPUTE_B_N=25
+COMPUTE_B_N=10#25
+
+
+# # Numerical constants
+# EPSABS = 1e-7
+# EPSREL = 1e-04
+# NMAX = 5 #10#1000#100#1000#25#50#
+# DEFAULT_INTEGRATION_POINTS =15#20#50## 100
+# DEFAULT_EPSILON = 1e-8
+# UR=0.5
+# COMPUTE_B_N=25
 
 # Simulation constants
 TIMEDECAYVOL = 0.0  # Time decay volatility factor

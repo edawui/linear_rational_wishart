@@ -13,20 +13,12 @@ import numpy as np
 import warnings
 
 
-# import jax.numpy as jnp
-# import numpy as np
-# from typing import List, Union, Tuple
-# import scipy.integrate as sp_i
-# import cmath
-# import math
-
 
 import jax
 import jax.numpy as jnp
 from jax import jit, vmap
 
 from .base import BaseFxModel
-# from Refactoring_all.refactoring_base.jump_refactoring.wishart_final_files import LRWBruModel
 from ...core.wishart_jump import WishartWithJump
 
 from ...core.wishart import WishartBru

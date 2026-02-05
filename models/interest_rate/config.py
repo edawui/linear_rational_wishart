@@ -107,6 +107,7 @@ class SwaptionConfig:
     strike: float
     delta_float: float = 0.5
     delta_fixed: float = 1.0
+    call:bool=True
     # u1: Optional[jnp.ndarray] = None
     # u2: Optional[jnp.ndarray] = None
     # is_spread: bool = False

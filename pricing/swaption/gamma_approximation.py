@@ -9,8 +9,7 @@ import jax.numpy as jnp
 
 from .base import BaseSwaptionPricer
 from ...utils.local_functions import tr_uv
-from Refactoring_all.refactoring_base.density-approximation.math_density_approximation import GammaApproximation
-
+from ...utils.density_approximation import GammaApproximation
 
 class GammaApproximationPricer(BaseSwaptionPricer):
     """Gamma approximation based swaption pricing."""

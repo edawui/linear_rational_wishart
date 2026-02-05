@@ -3,7 +3,10 @@
 # Available modules
 __all__ = [
     "base",
-    "saved",
+    # "saved",
+    "derivatives",
+    "expectations",
+    "phi_functions",
     "wishart",
     "wishart_jump",
 ]

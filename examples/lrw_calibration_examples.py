@@ -9,9 +9,12 @@ import jax.numpy as jnp
 import numpy as np
 import matplotlib.pyplot as plt
 
-from lrw_numpy.LrwInterestRateBru import LrwInterestRateBru
+# from lrw_numpy.LrwInterestRateBru import LrwInterestRateBru
+from linear_rational_wishart.models.interest_rate.config import SwaptionConfig, LRWModelConfig
+from linear_rational_wishart.models.interest_rate.lrw_model import LRWModel
 from linear_rational_wishart.calibration.lrw_calibration import LRWCalibrator
-from linear_rational_wishart.pricing import LRWSwaptionPricer
+# from linear_rational_wishart.pricing import LRWSwaptionPricer
+from linear_rational_wishart.pricing.swaption_pricer import LRWSwaptionPricer
 from linear_rational_wishart.utils.reporting import print_pretty
 
 
@@ -29,11 +32,16 @@ def example_curve_calibration():
     sigma = jnp.array([[0.04, 0.015], [0.015, 0.035]])
     
     # Create model
-    lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
+    lrw_model_config = LRWModelConfig( n=n,  alpha=alpha,  x0=x0,  omega=omega,  m=m, sigma=sigma    )
+    swaption_config = SwaptionConfig(maturity=5,tenor=5,  strike=0.05, delta_float = 0.5,delta_fixed= 1.0)
+    lrw_model = LRWModel(lrw_model_config,swaption_config)
+    
+    # lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
     u1 = jnp.array([[1, 0], [0, 0]])
     u2 = jnp.array([[0, 0], [0, 1]])
-    lrw_model.SetU1(u1)
-    lrw_model.SetU2(u2)
+    lrw_model.set_weight_matrices(u1,u2)
+    # lrw_model.SetU1(u1)
+    # lrw_model.SetU2(u2)
     
     # Market data (flat curve at 5%)
     flat_rate = 0.05
@@ -76,10 +84,14 @@ def example_curve_calibration():
     market_curve = jnp.exp(-flat_rate * fine_dates)
     
     # Initial model curve (need fresh model)
-    initial_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
-    initial_model.SetU1(u1)
-    initial_model.SetU2(u2)
-    initial_curve = jnp.array([initial_model.Bond(t) for t in fine_dates])
+    lrw_model_config = LRWModelConfig( n=n,  alpha=alpha,  x0=x0,  omega=omega,  m=m, sigma=sigma    )
+    swaption_config = SwaptionConfig(maturity=5,tenor=5,  strike=0.05, delta_float = 0.5,delta_fixed= 1.0)
+    initial_model = LRWModel(lrw_model_config,swaption_config)
+    initial_model.set_weight_matrices(u1,u2)
+    # initial_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
+    # initial_model.SetU1(u1)
+    # initial_model.SetU2(u2)
+    initial_curve = jnp.array([initial_model.bond(t) for t in fine_dates])
     
     calibrated_curve = calibrator.compute_model_zc_curve(fine_dates)
     
@@ -133,12 +145,20 @@ def example_multiple_curve_shapes():
         market_zc_values = jnp.exp(-market_rates * market_dates)
         
         # Create and calibrate model
-        lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
+        # lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
+        # u1 = jnp.array([[1, 0], [0, 0]])
+        # u2 = jnp.array([[0, 0], [0, 1]])
+        # lrw_model.SetU1(u1)
+        # lrw_model.SetU2(u2)
+        
+        lrw_model_config = LRWModelConfig( n=n,  alpha=alpha,  x0=x0,  omega=omega,  m=m, sigma=sigma    )
+        swaption_config = SwaptionConfig(maturity=5,tenor=5,  strike=0.05, delta_float = 0.5,delta_fixed= 1.0)
+        lrw_model = LRWModel(lrw_model_config,swaption_config)
+        # lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
         u1 = jnp.array([[1, 0], [0, 0]])
         u2 = jnp.array([[0, 0], [0, 1]])
-        lrw_model.SetU1(u1)
-        lrw_model.SetU2(u2)
-        
+        lrw_model.set_weight_matrices(u1,u2)
+  
         calibrator = LRWCalibrator(lrw_model)
         calibrator.calibrate_to_curve(market_dates, market_zc_values)
         
@@ -198,11 +218,17 @@ def example_parameter_impact():
             print(f"β={beta}: Gindikin condition violated")
             continue
             
-        lrw_model = LrwInterestRateBru(n, alpha_base, x0_base, omega, m, sigma)
+        lrw_model_config = LRWModelConfig( n=n,  alpha=alpha_base,  x0=x0_base,  omega=omega,  m=m, sigma=sigma    )
+        swaption_config = SwaptionConfig(maturity=5,tenor=5,  strike=0.05, delta_float = 0.5,delta_fixed= 1.0)
+        lrw_model = LRWModel(lrw_model_config,swaption_config)
         u1 = jnp.array([[1, 0], [0, 0]])
         u2 = jnp.array([[0, 0], [0, 1]])
-        lrw_model.SetU1(u1)
-        lrw_model.SetU2(u2)
+        lrw_model.set_weight_matrices(u1,u2)
+        # lrw_model = LrwInterestRateBru(n, alpha_base, x0_base, omega, m, sigma)
+        # u1 = jnp.array([[1, 0], [0, 0]])
+        # u2 = jnp.array([[0, 0], [0, 1]])
+        # lrw_model.SetU1(u1)
+        # lrw_model.SetU2(u2)
         
         calibrator = LRWCalibrator(lrw_model)
         
@@ -233,12 +259,19 @@ def example_parameter_impact():
     for scale in mean_reversion_scales:
         m_scaled = m * scale
         
-        lrw_model = LrwInterestRateBru(n, alpha_base, x0_base, omega, m_scaled, sigma)
+        # lrw_model = LrwInterestRateBru(n, alpha_base, x0_base, omega, m_scaled, sigma)
+        # u1 = jnp.array([[1, 0], [0, 0]])
+        # u2 = jnp.array([[0, 0], [0, 1]])
+        # lrw_model.SetU1(u1)
+        # lrw_model.SetU2(u2)
+
+        lrw_model_config = LRWModelConfig( n=n,  alpha=alpha_base,  x0=x0_base,  omega=omega,  m=m_scaled, sigma=sigma    )
+        swaption_config = SwaptionConfig(maturity=5,tenor=5,  strike=0.05, delta_float = 0.5,delta_fixed= 1.0)
+        lrw_model = LRWModel(lrw_model_config,swaption_config)
         u1 = jnp.array([[1, 0], [0, 0]])
         u2 = jnp.array([[0, 0], [0, 1]])
-        lrw_model.SetU1(u1)
-        lrw_model.SetU2(u2)
-        
+        lrw_model.set_weight_matrices(u1,u2)
+
         calibrator = LRWCalibrator(lrw_model)
         calibrator.calibrate_to_curve(market_dates, market_zc_values)
         
@@ -272,12 +305,19 @@ def example_swaption_calibration():
     sigma = jnp.array([[0.04, 0.015], [0.015, 0.037]])
     omega = 4.0 * sigma @ sigma
     
-    lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
+    lrw_model_config = LRWModelConfig( n, alpha, x0, omega, m, sigma)
+    swaption_config = SwaptionConfig(maturity=5,tenor=5,  strike=0.05, delta_float = 0.5,delta_fixed= 1.0)
+    lrw_model = LRWModel(lrw_model_config,swaption_config)
+    u1 = jnp.array([[1, 0], [0, 0]])
+    u2 = jnp.array([[0, 0], [0, 1]])
+    lrw_model.set_weight_matrices(u1,u2)
+
+    # lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
     
-    u1 = jnp.array([[1, 0], [0, 1]])
-    u2 = jnp.array([[0, 0], [0, 0]])
-    lrw_model.SetU1(u1)
-    lrw_model.SetU2(u2)
+    # u1 = jnp.array([[1, 0], [0, 1]])
+    # u2 = jnp.array([[0, 0], [0, 0]])
+    # lrw_model.SetU1(u1)
+    # lrw_model.SetU2(u2)
     
     # Define swaption grid
     maturities = [1, 2, 5]
@@ -293,9 +333,12 @@ def example_swaption_calibration():
     for mat in maturities:
         for ten in tenors:
             # Set swaption
-            lrw_model.SetOptionProperties(ten, mat, 0.5, 0.5, 0.0)
-            atm = lrw_model.ComputeSwapRate()
-            lrw_model.SetOptionProperties(ten, mat, 0.5, 0.5, atm)
+            # lrw_model.SetOptionProperties(ten, mat, 0.5, 0.5, 0.0)
+            swaption_config = SwaptionConfig(maturity=mat,tenor=ten,  strike=0.05, delta_float = 0.5,delta_fixed= 0.5)
+            lrw_model.set_swaption_config(swaption_config)
+            atm = lrw_model.compute_swap_rate()
+            # lrw_model.SetOptionProperties(ten, mat, 0.5, 0.5, atm)
+            swaption_config = SwaptionConfig(maturity=mat,tenor=ten,  strike=atm, delta_float = 0.5,delta_fixed= 0.5)
             
             # Price
             price, iv = pricer.price_swaption(method="fft", return_implied_vol=True)
@@ -357,12 +400,18 @@ def example_gindikin_adjustment():
         
         if gindikin_ok:
             # Create model with valid parameters
-            lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
-            
+            lrw_model_config = LRWModelConfig( n, alpha, x0, omega, m, sigma)
+            swaption_config = SwaptionConfig(maturity=5,tenor=5,  strike=0.05, delta_float = 0.5,delta_fixed= 1.0)
+            lrw_model = LRWModel(lrw_model_config,swaption_config)
             u1 = jnp.array([[1, 0], [0, 0]])
             u2 = jnp.array([[0, 0], [0, 1]])
-            lrw_model.SetU1(u1)
-            lrw_model.SetU2(u2)
+            lrw_model.set_weight_matrices(u1,u2)
+            
+            # lrw_model = LrwInterestRateBru(n, alpha, x0, omega, m, sigma)
+            # u1 = jnp.array([[1, 0], [0, 0]])
+            # u2 = jnp.array([[0, 0], [0, 1]])
+            # lrw_model.SetU1(u1)
+            # lrw_model.SetU2(u2)
             
             # Use calibrator to verify
             calibrator = LRWCalibrator(lrw_model)

@@ -3,11 +3,9 @@
 
 import math
 import cmath
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, Union
 from functools import partial
 
-# from BlackScholes import f
-# from WishartBru import NMAX
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jspl
@@ -16,19 +14,55 @@ import scipy.integrate as sp_i
 import numpy as np
 
 from ..utils.local_functions import vec, vec_inv, tr_uv, eij, eij_simple
-from ..config.constants import  NMAX
+from ..config.constants import NMAX, UR
 from ..pricing.swaption.fourier_pricing import FourierPricer
+from .results import (
+    MatrixResult,
+    GammaResult,
+    AlphaSensitivityResult,
+    GreekType,
+    InstrumentType,
+    SensitivityLogger,
+)
+
 
 class GreeksCalculator:
     """Calculate Greeks for LRW interest rate model."""
     
-    def __init__(self, model):
+    def __init__(self, model, enable_logging: bool = False):
         """Initialize Greeks calculator with LRW model."""
         self.model = model
+        self.logger = SensitivityLogger("greeks") if enable_logging else None
         
-    def price_option_sensi_alpha(self, ur: float = 0.5, nmax: int = NMAX, 
-                                recompute_a3_b3: bool = False) -> Tuple[float, Dict]:
-        """Calculate alpha sensitivity (derivative with respect to alpha)."""
+    def price_option_sensi_alpha(
+        self, 
+        ur: float = UR, #0.5
+        nmax: int = NMAX,
+        recompute_a3_b3: bool = False,
+        return_legacy_format: bool = False
+    ) -> Tuple[float, Union[AlphaSensitivityResult, Dict]]:
+        """
+        Calculate alpha sensitivity (derivative with respect to alpha).
+        
+        Parameters
+        ----------
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+        recompute_a3_b3 : bool
+            Whether to recompute a3 and b3
+        return_legacy_format : bool
+            If True, return legacy dict format
+            
+        Returns
+        -------
+        Tuple[float, AlphaSensitivityResult or Dict]
+            Alpha sensitivity value and result object
+        """
+        if self.logger:
+            self.logger.log_calculation_start("Alpha", self.model.strike)
+        
         if recompute_a3_b3:
             self.model.compute_b3_a3()
             
@@ -55,24 +89,63 @@ class GreeksCalculator:
         res1 = r1[0] / math.pi
         sensi_alpha1 = res1 * math.exp(-self.model.alpha * self.model.maturity) / (1 + tr_uv(self.model.u1, self.model.x0))
         
-        fourier_pricer= FourierPricer(self.model)
-        option_price = fourier_pricer.price(ur)#self.model.price_option()
+        fourier_pricer = FourierPricer(self.model)
+        option_price = fourier_pricer.price(ur)
         sensi_alpha2 = -self.model.maturity * option_price
         
         sensi_alpha = sensi_alpha1 + sensi_alpha2
         
+        # Build legacy format dict (same keys as original)
         alpha_sensi_report = {}
-        alpha_sensi_report[f"ALPHASENSI:{self.model.strike}:NA_NA:ALPHASENSIVALUE:NA"] = sensi_alpha
+        alpha_sensi_report[f"ALPHASENSI_FOR_STRIKEVALUE:{self.model.strike}:NA_NA:ALPHASENSIVALUE:NA"] = sensi_alpha
         
-        return sensi_alpha, alpha_sensi_report
+        if self.logger:
+            self.logger.logger.info(f"Alpha sensitivity complete | Value={sensi_alpha:+.6f}")
         
-    def price_option_sensi_omega(self, ur: float = 0.5, nmax: int = NMAX) -> Tuple[jnp.ndarray, Dict]:
-        """Calculate omega sensitivity (Vomma)."""
+        if return_legacy_format:
+            return sensi_alpha, alpha_sensi_report
+        
+        # Create structured result
+        result = AlphaSensitivityResult(
+            strike=self.model.strike,
+            alpha_sensitivity=float(sensi_alpha),
+            option_price=float(option_price)
+        )
+        
+        return sensi_alpha, result
+        
+    def price_option_sensi_omega(
+        self, 
+        ur: float = UR, #0.5
+        nmax: int = NMAX,
+        return_legacy_format: bool = False
+    ) -> Tuple[jnp.ndarray, Union[MatrixResult, Dict]]:
+        """
+        Calculate omega sensitivity (Vomma).
+        
+        Parameters
+        ----------
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+        return_legacy_format : bool
+            If True, return legacy dict format
+            
+        Returns
+        -------
+        Tuple[jnp.ndarray, MatrixResult or Dict]
+            Omega sensitivity matrix and result object
+        """
+        if self.logger:
+            self.logger.log_calculation_start("Omega", self.model.strike, n=self.model.n)
+        
         self.model.compute_b3_a3()
         self._compute_b3_derive_omega()
         
         sensi_omega = jnp.zeros((self.model.n, self.model.n))
         omega_sensi_report = {}
+        component_details = {}
         
         for i in range(self.model.n):
             for j in range(self.model.n):
@@ -101,17 +174,60 @@ class GreeksCalculator:
                 sensi_omega_ij = res1 * math.exp(-self.model.alpha * self.model.maturity) / (1 + tr_uv(self.model.u1, self.model.x0))
                 sensi_omega = sensi_omega.at[i, j].set(sensi_omega_ij)
                 
-                omega_sensi_report[f"OMEGASENSI:{self.model.strike}:{i}_{j}:OMEGASENSIVALUE:ALL:NA"] = sensi_omega[i, j]
+                # Store in legacy format
+                omega_sensi_report[f"OMEGASENSI_FOR_STRIKE:{self.model.strike}:{i}_{j}:OMEGASENSIVALUE:ALL:NA"] = sensi_omega[i, j]
                 
-        return sensi_omega, omega_sensi_report
+                # Store for structured result
+                component_details[(i, j)] = float(sensi_omega_ij)
         
-    def price_option_sensi_m(self, ur: float = 0.5, nmax: int = NMAX) -> Tuple[jnp.ndarray, Dict]:
-        """Calculate M sensitivity."""
+        if self.logger:
+            self.logger.logger.info(f"Omega sensitivity complete | Shape={sensi_omega.shape}")
+        
+        if return_legacy_format:
+            return sensi_omega, omega_sensi_report
+        
+        # Create structured result
+        result = MatrixResult(
+            greek_type=GreekType.OMEGA,
+            strike=self.model.strike,
+            values=np.array(sensi_omega),
+            component_details=component_details
+        )
+        
+        return sensi_omega, result
+        
+    def price_option_sensi_m(
+        self, 
+        ur: float = UR, #0.5
+        nmax: int = NMAX,
+        return_legacy_format: bool = False
+    ) -> Tuple[jnp.ndarray, Union[MatrixResult, Dict]]:
+        """
+        Calculate M sensitivity.
+        
+        Parameters
+        ----------
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+        return_legacy_format : bool
+            If True, return legacy dict format
+            
+        Returns
+        -------
+        Tuple[jnp.ndarray, MatrixResult or Dict]
+            M sensitivity matrix and result object
+        """
+        if self.logger:
+            self.logger.log_calculation_start("M", self.model.strike, n=self.model.n)
+        
         self.model.compute_b3_a3()
         self._compute_a3_b3_derive_m()
         
         sensi_m = jnp.zeros((self.model.n, self.model.n))
         m_sensi_report = {}
+        component_details = {}
         
         for i in range(self.model.n):
             for j in range(self.model.n):
@@ -130,6 +246,10 @@ class GreeksCalculator:
                     b_derive_m_ij = self.model.wishart.compute_b_derive_m(self.model.maturity, i, j, z, self.model.a3, self.model.a3_derive_m)
                     a_derive_m_ij = self.model.wishart.compute_a_derive_m(self.model.maturity, i, j, z, self.model.a3, self.model.a3_derive_m)
                     
+                    
+                    # print(f"a_derive_m_ij ={b_derive_m_ij}")
+                    # print(f"a_derive_m_ij ={a_derive_m_ij}")
+
                     temp1 = z * b3_m_ij * exp_z_b3 * phi1
                     temp2 = (jnp.trace(a_derive_m_ij @ self.model.x0) + b_derive_m_ij) * exp_z_b3 * phi1
                     
@@ -143,20 +263,65 @@ class GreeksCalculator:
                 sensi_m_ij = res1 * math.exp(-self.model.alpha * self.model.maturity) / (1 + tr_uv(self.model.u1, self.model.x0))
                 sensi_m = sensi_m.at[i, j].set(sensi_m_ij)
                 
-                m_sensi_report[f"MSENSI:{self.model.strike}:{i}_{j}:MSENSIVALUE:NA"] = sensi_m[i, j]
+                # Store in legacy format
+                m_sensi_report[f"MSENSI_FOR_STRIKE:{self.model.strike}:{i}_{j}:MSENSIVALUE:NA"] = sensi_m[i, j]
                 
-        return sensi_m, m_sensi_report
+                # Store for structured result
+                component_details[(i, j)] = float(sensi_m_ij)
         
-    def price_option_vega(self, ur: float = 0.5, nmax: int = NMAX) -> Tuple[jnp.ndarray, Dict]:
-        """Calculate Vega (sigma sensitivity)."""
+        if self.logger:
+            self.logger.logger.info(f"M sensitivity complete | Shape={sensi_m.shape}")
+        
+        if return_legacy_format:
+            return sensi_m, m_sensi_report
+        
+        # Create structured result
+        result = MatrixResult(
+            greek_type=GreekType.M,
+            strike=self.model.strike,
+            values=np.array(sensi_m),
+            component_details=component_details
+        )
+        
+        return sensi_m, result
+        
+    def price_option_vega(
+        self, 
+        ur: float = UR, #0.5
+        nmax: int = NMAX,
+        return_legacy_format: bool = False
+    ) -> Tuple[jnp.ndarray, Union[MatrixResult, Dict]]:
+        """
+        Calculate Vega (sigma sensitivity).
+        
+        Parameters
+        ----------
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+        return_legacy_format : bool
+            If True, return legacy dict format
+            
+        Returns
+        -------
+        Tuple[jnp.ndarray, MatrixResult or Dict]
+            Vega sensitivity matrix and result object
+        """
+        if self.logger:
+            self.logger.log_calculation_start("Vega", self.model.strike, n=self.model.n)
+        
         self.model.compute_b3_a3()
         
         sensi_sigma = jnp.zeros((self.model.n, self.model.n))
         sigma_sensi_report = {}
+        component_details = {}
+        
         print("In price_option_vega ")
         for i in range(self.model.n):
             for j in range(self.model.n):
                 print(f"Calculating Vega for component {i}, {j}")
+                
                 def f1(ui):
                     u = complex(ur, ui)
                     z = u
@@ -174,16 +339,68 @@ class GreeksCalculator:
                 sensi_sigma_ij = res1 * math.exp(-self.model.alpha * self.model.maturity) / (1 + tr_uv(self.model.u1, self.model.x0))
                 sensi_sigma = sensi_sigma.at[i, j].set(sensi_sigma_ij)
                 
-                sigma_sensi_report[f"VEGASENSI:{self.model.strike}:{i}_{j}:VEGAVALUE:ALL:NA"] = sensi_sigma_ij
+                # Store in legacy format (same key as original)
+                sigma_sensi_report[f"VEGA_FOR_STRIKE:{self.model.strike}:{i}_{j}:VEGAVALUE:ALL:NA"] = sensi_sigma_ij
                 
-        return sensi_sigma, sigma_sensi_report
+                # Store for structured result
+                component_details[(i, j)] = float(sensi_sigma_ij)
         
-    def compute_gamma_bond(self, bond_gamma_id0: int, bond_gamma_id1: int, 
-                          ur: float = 0.5, nmax: int = 1000) -> Tuple[float, Dict]:
-        """Calculate Gamma for bond positions."""
+        if self.logger:
+            self.logger.logger.info(f"Vega complete | Shape={sensi_sigma.shape}")
+        
+        if return_legacy_format:
+            return sensi_sigma, sigma_sensi_report
+        
+        # Create structured result
+        result = MatrixResult(
+            greek_type=GreekType.VEGA,
+            strike=self.model.strike,
+            values=np.array(sensi_sigma),
+            component_details=component_details
+        )
+        
+        return sensi_sigma, result
+        
+    def compute_gamma_bond(
+        self, 
+        bond_gamma_id0: int, 
+        bond_gamma_id1: int,
+        ur: float = UR, #0.5
+        nmax: int = NMAX,
+        return_legacy_format: bool = False
+    ) -> Tuple[float, Union[GammaResult, Dict]]:
+        """
+        Calculate Gamma for bond positions.
+        
+        Parameters
+        ----------
+        bond_gamma_id0 : int
+            First bond index
+        bond_gamma_id1 : int
+            Second bond index
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+        return_legacy_format : bool
+            If True, return legacy dict format
+            
+        Returns
+        -------
+        Tuple[float, GammaResult or Dict]
+            Gamma value and result object
+        """
+        if self.logger:
+            self.logger.log_calculation_start(
+                "Gamma (Bond)", 
+                self.model.strike,
+                id0=bond_gamma_id0,
+                id1=bond_gamma_id1
+            )
+        
         self.model.compute_b3_a3()
         
-        # Prepare all eta, T, mu, and theta values
+        # Prepare all eta, T, mu, and theta values (same as original)
         all_eta = []
         all_t = []
         all_mu = []
@@ -306,17 +523,69 @@ class GreeksCalculator:
         res_gamma = expectation * eta_tn1
         res_gamma /= divider
         
+        # Build legacy format dict (same key as original)
         gamma_result = {}
-        gamma_result[f"Gamma:{self.model.strike}:{all_t[bond_gamma_id0]}_{all_t[bond_gamma_id1]}:BOND:NA:NA"] = res_gamma
+        gamma_result[f"GAMMA_FOR_STRIKE:{self.model.strike}:{all_t[bond_gamma_id0]}_{all_t[bond_gamma_id1]}:BOND:NA:NA"] = float(res_gamma)
         
-        return res_gamma, gamma_result
+        if self.logger:
+            self.logger.logger.info(f"Gamma (Bond) complete | Value={res_gamma:+.6f}")
         
-    def compute_gamma_swap_cross(self, first_component: str, second_component: str,
-                                ur: float = 0.5, nmax: int = 1000) -> Tuple[float, Dict]:
-        """Calculate cross-Gamma between swap components."""
+        if return_legacy_format:
+            return res_gamma, gamma_result
+        
+        # Create structured result
+        result = GammaResult(
+            strike=self.model.strike,
+            instrument_type=InstrumentType.BOND,
+            first_component=bond_gamma_id0,
+            second_component=bond_gamma_id1,
+            gamma_value=float(res_gamma),
+            first_maturity=all_t[bond_gamma_id0],
+            second_maturity=all_t[bond_gamma_id1]
+        )
+        
+        return res_gamma, result
+        
+    def compute_gamma_swap_cross(
+        self, 
+        first_component: str, 
+        second_component: str,
+        ur: float = UR, #0.5
+        nmax: int = NMAX,
+        return_legacy_format: bool = False
+    ) -> Tuple[float, Union[GammaResult, Dict]]:
+        """
+        Calculate cross-Gamma between swap components.
+        
+        Parameters
+        ----------
+        first_component : str
+            First component ("FIXED" or "FLOATING")
+        second_component : str
+            Second component ("FIXED" or "FLOATING")
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+        return_legacy_format : bool
+            If True, return legacy dict format
+            
+        Returns
+        -------
+        Tuple[float, GammaResult or Dict]
+            Gamma value and result object
+        """
+        if self.logger:
+            self.logger.log_calculation_start(
+                "Gamma (Swap Cross)",
+                self.model.strike,
+                first=first_component,
+                second=second_component
+            )
+        
         self.model.compute_b3_a3()
         
-        # Floating leg calculations
+        # Floating leg calculations (same as original)
         b1_bar, a1 = self.model.compute_bar_b1_a1(0)
         floating_leg_mu = b1_bar
         floating_leg_theta = a1
@@ -326,7 +595,7 @@ class GreeksCalculator:
         floating_leg_mu = floating_leg_mu - math.exp(-self.model.alpha * delta_t) * b1_bar
         floating_leg_theta = floating_leg_theta - math.exp(-self.model.alpha * delta_t) * a1
         
-        # Fixed leg calculations
+        # Fixed leg calculations (same as original)
         fix_leg_mu = 0
         fix_leg_theta = jnp.zeros(self.model.x0.shape)
         
@@ -338,7 +607,7 @@ class GreeksCalculator:
             fix_leg_mu += -self.model.delta_fixed * self.model.strike * math.exp(-self.model.alpha * delta_t) * b1_bar
             fix_leg_theta += -self.model.delta_fixed * self.model.strike * math.exp(-self.model.alpha * delta_t) * a1
             
-        # Set up mu and theta based on components
+        # Set up mu and theta based on components (same logic as original)
         mu0 = 0
         theta0 = jnp.zeros(self.model.x0.shape)
         mu1 = 0
@@ -439,12 +708,31 @@ class GreeksCalculator:
         eta_tn1 = math.exp(-self.model.alpha * self.model.maturity) / (1 + jnp.trace(self.model.u1 @ self.model.x0))
         res_gamma = expectation * eta_tn1 / divider
         
+        # Build legacy format dict (same key as original)
         gamma_result = {}
-        gamma_result[f"Gamma:{self.model.strike}:{first_component}_{second_component}:SWAP:NA:NA"] = res_gamma
+        gamma_result[f"GAMMA_FOR_STRIKE:{self.model.strike}:{first_component}_{second_component}:SWAP:NA:NA"] = float(res_gamma)
         
-        return res_gamma, gamma_result
+        if self.logger:
+            self.logger.logger.info(f"Gamma (Swap Cross) complete | Value={res_gamma:+.6f}")
         
-    # Private helper methods
+        if return_legacy_format:
+            return res_gamma, gamma_result
+        
+        # Create structured result
+        result = GammaResult(
+            strike=self.model.strike,
+            instrument_type=InstrumentType.SWAP,
+            first_component=first_component,
+            second_component=second_component,
+            gamma_value=float(res_gamma)
+        )
+        
+        return res_gamma, result
+        
+    # =========================================================================
+    # Private helper methods (unchanged from original)
+    # =========================================================================
+    
     def _compute_a_derive_alpha(self, t: float, z: complex) -> jnp.ndarray:
         """Compute derivative of A with respect to alpha."""
         e_mt = jspl.expm(t * self.model.m)
@@ -514,9 +802,8 @@ class GreeksCalculator:
     def _compute_b1_derive_omega(self, t: float, i: int, j: int) -> float:
         """Compute derivative of b1 with respect to omega element (i,j)."""
         e_at = jspl.expm(t * self.model.A)
-        # eAt = jsl.expm(self.A * t)
 
-        a_inv = self.model.wishart.A_inv#jnp.linalg.inv(self.model.A)
+        a_inv = self.model.wishart.A_inv
         i_n_square = jnp.eye(self.model.n * self.model.n)
         
         mat = a_inv @ (e_at - i_n_square)
@@ -527,7 +814,7 @@ class GreeksCalculator:
         b_ij_temp = mat @ e_ij_vec
         b_ij = jnp.transpose(vec(np.array(self.model.u1))) @ b_ij_temp
         
-        return b_ij#[0, 0]
+        return b_ij
         
     def _compute_a3_b3_derive_m(self):
         """Compute derivatives of a3 and b3 with respect to m."""
@@ -587,10 +874,7 @@ class GreeksCalculator:
         a1 = a1.at[n_square:2*n_square, n_square:2*n_square].set(m_kron_identity)
         
         exp_t_a1 = jspl.expm(t * a1)
-        temp=vec(np.array(self.model.u1))
-        # print(temp)
-        # print(temp.reshape(-1, 1))
-        # v_0_0 = v_0_0.at[0:n_square, 0:1].set(vec(np.array(self.model.u1)))
+        temp = vec(np.array(self.model.u1))
         v_0_0 = v_0_0.at[0:n_square, 0:1].set(temp.reshape(-1, 1))
         v_0_t = exp_t_a1 @ v_0_0
         
@@ -600,8 +884,7 @@ class GreeksCalculator:
         a_0_t = vec_inv(np.array(vec_a_0_t))
         a_0_t_prime = vec_inv(np.array(vec_a_0_t_prime))
         
-        temp2=vec(np.array(self.model.omega))
-        # b_0_tilde = b_0_tilde.at[0:n_square, 0:1].set(vec(np.array(self.model.omega)))
+        temp2 = vec(np.array(self.model.omega))
         b_0_tilde = b_0_tilde.at[0:n_square, 0:1].set(temp2.reshape(-1, 1))
         v_0_t_tilde = (jnp.linalg.inv(a1) @ (exp_t_a1 - i_n_square)) @ b_0_tilde
         
@@ -615,4 +898,3 @@ class GreeksCalculator:
         b_t_prime = jnp.trace(i_n @ a_tilde_0_t_prime)
         
         return jnp.array(a_0_t), jnp.array(a_0_t_prime), b_t, b_t_prime
-

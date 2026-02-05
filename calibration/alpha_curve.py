@@ -2,9 +2,31 @@
 # calibration/alpha_curve.py
 """Alpha curve calibration for pseudo-inverse smoothing."""
 
+import numpy as np
 import jax.numpy as jnp
 from typing import List, Tuple
 import scipy.interpolate as sp_interpolate
+
+
+def getInitialAlpha(zcDates, marketZcValues, modelZcValues,interpolation='loglinear', extrapolation='flat'):
+
+    if len(zcDates) != len(marketZcValues):
+            raise ValueError("zcDates and marketZcValues must have the same length")
+    
+    if len(zcDates) != len(modelZcValues):
+            raise ValueError("zcDates and modelZcValues must have the same length")
+
+    marketZcValues = np.asarray(marketZcValues)
+    modelZcValues = np.asarray(modelZcValues)
+    
+    if np.any(modelZcValues == 0):
+        raise ValueError("modelZcValues contains zero(s), division by zero is not allowed")
+   
+    alphaValues =marketZcValues / modelZcValues 
+    initialCurveAlpha = AlphaFromInitialCurve(zcDates, alphaValues)
+    #, interpolation=interpolation, extrapolation=extrapolation)
+
+    return initialCurveAlpha
 
 
 class AlphaFromInitialCurve:

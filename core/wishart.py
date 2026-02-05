@@ -16,11 +16,17 @@ from math import factorial
 from scipy.special import binom, factorial
 
 from .base import BaseWishart
+from .derivatives import WishartDerivatives
+from .phi_functions import PhiFunctions
+
+
 from ..config.constants import *
 from ..utils.local_functions import vech, vec, tr_uv
 
 
-class WishartBru(BaseWishart):
+# class WishartBru(BaseWishart):
+class WishartBru(BaseWishart, WishartDerivatives, PhiFunctions):
+
     """
     Wishart process implementation following Bru specification.
     
@@ -357,7 +363,8 @@ class WishartBru(BaseWishart):
         t = self.maturity
         a = self.compute_a(t, theta1)
         b1 = self.compute_b(t, theta1)
-        
+        # print("--- b1=",b1)
+        # jax.debug.print("--- b1 = {x}", x=b1)
         a2 = jnp.trace(self.x0 @ a)
         
         phi_one = jnp.exp(a2 + b1)

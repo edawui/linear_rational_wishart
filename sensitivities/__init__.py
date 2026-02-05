@@ -4,7 +4,7 @@
 __all__ = [
     "delta_hedging",
     "greeks",
-    "lrw-greeks-calculator_INCOMPLETE",
+    # "lrw-greeks-calculator_INCOMPLETE",
     "vega_calculations",
 ]
 

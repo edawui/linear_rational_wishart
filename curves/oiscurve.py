@@ -57,7 +57,10 @@ from ..config import constants
 
   #endregion
    
-
+def forward_swap_rate_calculation_jax(stn, stp, sumTn, sumTp):
+        """JAX-compiled forward swap rate calculation"""
+        sumTpTn = sumTn - sumTp
+        return (stn * sumTn - stp * sumTp) / sumTpTn
 # @jit
 def interp_jax(x, xp, fp):
     """JAX-compatible interpolation function"""
@@ -209,6 +212,10 @@ class OisCurve(object):
         # Convert to JAX arrays
         self.bootstrapDfCurve = jnp.array([self.QLdiscount_curve.discount(float(t)) for t in self.T])
         self.logBootstrapDfCurve = jnp.log(self.bootstrapDfCurve)
+
+        ##todo set these properly from conventions
+        self.DeltaFixedLeg =1.0
+        self.DeltaFloatingLeg =1.0
         
     def bootstrapRateCurve(self, fixedLegFreq=1.0):
         """Bootstrap rate curve with JAX optimizations"""
@@ -244,7 +251,15 @@ class OisCurve(object):
         
         self.bootstrapRateCurve = bootstrapRateCurve
         self.df["ZcRate"] = self.bootstrapRateCurve.tolist()
+     # @jit
     
+    def RateInterpolate_jax(self, t, T_array, Rate_array):
+        """JAX-compiled rate interpolation"""
+        return jnp.interp(t, T_array, Rate_array)
+    
+    def RateInterpolate(self, t):
+        """Rate interpolation with JAX optimization"""
+        return float(self.RateInterpolate_jax(jnp.float32(t), self.T, self.Rate))
     def _bondSimple(self, t1):
         """Simple bond price calculation with JAX optimization"""
         return self.QLdiscount_curve.discount(t1)
@@ -330,7 +345,45 @@ class OisCurve(object):
     def bond_zc_rate_vectorized(self, timeToMat_array):
         """Vectorized zero-coupon rate calculation"""
         return vmap(self._bond_zc_rate_jax)(timeToMat_array)
+    
+    def forward_swap_rate(self, Tp: float, Tn: float, deltaFixedLeg: float, 
+                       deltaFloatingLeg: float):##, oisCurve: OisCurve):
+        """
+        Compute forward swap rate with JAX optimization
+        """
+        
+        v = 0.0
+        check1 = round((Tn - Tp) / deltaFixedLeg) == ((Tn - Tp) / deltaFixedLeg)
+        check2 = round((Tn - Tp) / deltaFloatingLeg) == ((Tn - Tp) / deltaFloatingLeg)
+         
+        if check1 & check2:
+            # Calculate bond sums using vectorized operations
+            t_values_Tn = jnp.arange(deltaFixedLeg, Tn + deltaFixedLeg/2, deltaFixedLeg)
+            t_values_Tp = jnp.arange(deltaFixedLeg, Tp + deltaFixedLeg/2, deltaFixedLeg)
+            
+            bond_values_Tn = jnp.array([self.Bond(float(t)) for t in t_values_Tn])
+            bond_values_Tp = jnp.array([self.Bond(float(t)) for t in t_values_Tp])
 
+            if ((float(self.DeltaFixedLeg) == deltaFixedLeg) & 
+                (float(self.DeltaFloatingLeg) == deltaFloatingLeg)):
+                stn = self.RateInterpolate(Tn)
+                stp = self.RateInterpolate(Tp)
+                v = float(self._forward_swap_rate_jax(
+                    jnp.float32(Tp), jnp.float32(Tn), jnp.float32(deltaFixedLeg),
+                    jnp.float32(stn), jnp.float32(stp), bond_values_Tn, bond_values_Tp))
+            else:
+                print("The forward swap we want to compute does not have a tenor structure compatible with the tenor structure of the data.")
+        else:
+            print("The tenor structure of the fixed leg has to be a multiple of deltaFixedLeg, same applies to floating leg. No stub either on the fixed leg or on the floating leg.")
+            
+        return v
+    
+    
+    def _forward_swap_rate_jax(self, Tp, Tn, deltaFixedLeg, stn, stp, bond_values_Tn, bond_values_Tp):
+        """JAX-compiled forward swap rate calculation"""
+        sumTn = jnp.sum(bond_values_Tn)
+        sumTp = jnp.sum(bond_values_Tp)
+        return forward_swap_rate_calculation_jax(stn, stp, sumTn, sumTp)
 if __name__ == "__main__":
     print("Testing OIS Curve with JAX optimizations")
     

@@ -4,15 +4,15 @@
 __all__ = [
     "bachelier",
     "black_scholes",
-    "expectations",
+    # "expectations",
     "fx",
     "implied_vol_black_scholes",
     "jackel_method",
     "jax_implementations",
     "mc_pricer",
-    "phi_functions",
-    "saved",
-    "swaption",
+    # "phi_functions",
+    # "saved",
+    # "swaption",
     "swaption_pricer",
 ]
 

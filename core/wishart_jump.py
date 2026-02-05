@@ -560,7 +560,7 @@ class WishartWithJump(BaseWishart, WishartDerivatives, PhiFunctions):
         t = self.maturity
         a = self.compute_a(t, theta1)
         b1 = self.compute_b(t, theta1)
-        
+        # print("b1=", b1)
         a2 = jnp.trace(self.x0 @ a)
         
         if self.has_jump:

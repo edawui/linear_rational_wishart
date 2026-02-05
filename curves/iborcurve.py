@@ -21,7 +21,7 @@ from ..models.interest_rate.lrw_model import LRWModel
 from typing import cast
 from ..data.data_helpers import *
 from ..data.data_market_data import * 
-from .oiscurve_jax import *
+from .oiscurve import *
 from ..config import constants
 
 #region To be removed
@@ -31,7 +31,7 @@ from ..config import constants
 #     from typing import cast
 #     from ..data.data_helpers import *
 #     from ..data.data_market_data import * 
-#     from .oiscurve_jax import *
+#     from .oiscurve import *
 
 # except ImportError:
 #     # sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -55,7 +55,7 @@ from ..config import constants
 #     from linear_rational_wishart.models.interest_rate.lrw_model import LRWModel 
 #     from linear_rational_wishart.data.data_helpers import *
 #     from linear_rational_wishart.data.data_market_data import * 
-#     from linear_rational_wishart.curves.oiscurve_jax import *
+#     from linear_rational_wishart.curves.oiscurve import *
 #endregion
 
 # JAX-optimized utility functions
@@ -302,7 +302,7 @@ class IborCurve(object):
             local_sumA = sumA
             
             while tFloating <= self.T[i]:
-                local_sumA += lrw.Spread(tFloating)
+                local_sumA += lrw.spread(tFloating)
                 tFloating += float(self.DeltaFloatLeg)
             
             s = 1.0 - lrw.Bond(float(self.T[i])) + local_sumA
@@ -325,13 +325,13 @@ class IborCurve(object):
             self.RateModel.append(s)
 
     # @jit
-    def _ForwardSwapRate_jax(self, Tp, Tn, deltaFixedLeg, stn, stp, bond_values_Tn, bond_values_Tp):
+    def _forward_swap_rate_jax(self, Tp, Tn, deltaFixedLeg, stn, stp, bond_values_Tn, bond_values_Tp):
         """JAX-compiled forward swap rate calculation"""
         sumTn = jnp.sum(bond_values_Tn)
         sumTp = jnp.sum(bond_values_Tp)
         return forward_swap_rate_calculation_jax(stn, stp, sumTn, sumTp)
 
-    def ForwardSwapRate(self, Tp: float, Tn: float, deltaFixedLeg: float, 
+    def forward_swap_rate(self, Tp: float, Tn: float, deltaFixedLeg: float, 
                        deltaFloatingLeg: float, oisCurve: OisCurve):
         """
         Compute forward swap rate with JAX optimization
@@ -352,7 +352,7 @@ class IborCurve(object):
                 (float(self.DeltaFloatingLeg) == deltaFloatingLeg)):
                 stn = self.RateInterpolate(Tn)
                 stp = self.RateInterpolate(Tp)
-                v = float(self._ForwardSwapRate_jax(
+                v = float(self._forward_swap_rate_jax(
                     jnp.float32(Tp), jnp.float32(Tn), jnp.float32(deltaFixedLeg),
                     jnp.float32(stn), jnp.float32(stp), bond_values_Tn, bond_values_Tp))
             else:
@@ -362,7 +362,7 @@ class IborCurve(object):
             
         return v
         
-    def ForwardSwapRateModel(self, Tp: float, Tn: float, deltaFixedLeg: float, 
+    def forward_swap_rateModel(self, Tp: float, Tn: float, deltaFixedLeg: float, 
                            deltaFloatingLeg: float, lrw: LRWModel):
         """
         Compute forward swap rate for model with JAX optimization
@@ -387,7 +387,7 @@ class IborCurve(object):
                 stn = lrw.RateModelInterpolate(Tn) if hasattr(lrw, 'RateModelInterpolate') else self.RateModelInterpolate(Tn)
                 stp = lrw.RateModelInterpolate(Tp) if hasattr(lrw, 'RateModelInterpolate') else self.RateModelInterpolate(Tp)
                 
-                v = float(self._ForwardSwapRate_jax(
+                v = float(self._forward_swap_rate_jax(
                     jnp.float32(Tp), jnp.float32(Tn), jnp.float32(deltaFixedLeg),
                     jnp.float32(stn), jnp.float32(stp), bond_values_Tn, bond_values_Tp))
             else:
@@ -438,18 +438,18 @@ class IborCurve(object):
                 tStart = float(self.T[index-1])
                 
             tFloating = tStart
-            Avalue = lrw.Spread(tFloating)
+            Avalue = lrw.spread(tFloating)
             tFloating += float(self.DeltaFloatLeg)
             nbA = 1
             
             while ((tFloating < mat) and (math.fabs(mat - tFloating) > (float(self.DeltaFloatLeg)/2.0))):
-                Avalue += lrw.Spread(tFloating)
+                Avalue += lrw.spread(tFloating)
                 tFloating += float(self.DeltaFloatLeg)
                 nbA += 1
             
             # Handle stub
             if tFloating < mat:
-                Avalue += lrw.Spread(mat)
+                Avalue += lrw.spread(mat)
                 nbA += 1
                 
             Avalue /= nbA
@@ -467,11 +467,11 @@ class IborCurve(object):
             
             tStart = 0
             tFloating = tStart
-            Avalue = lrw.Spread(tFloating)
+            Avalue = lrw.spread(tFloating)
             tFloating += float(self.DeltaFloatLeg)
             
             while ((tFloating < mat) and (math.fabs(mat - tFloating) > (float(self.DeltaFloatLeg)/2.0))):
-                Avalue += lrw.Spread(tFloating)
+                Avalue += lrw.spread(tFloating)
                 tFloating += float(self.DeltaFloatLeg)
             
             return Avalue
@@ -490,6 +490,80 @@ class IborCurve(object):
     def compute_bond_prices_batch(self, t_array):
         """Vectorized bond price calculation"""
         return jnp.array([self.oisCurve.bond_price(float(t)) for t in t_array])
+
+
+    def getModelA_vmap_compatible(self, mat, lrw: LRWModel):
+        """
+        JAX vmap-compatible version of getModelA.
+        Computes average spread over the floating leg period ending at mat.
+        """
+        delta = float(self.DeltaFloatLeg)
+        T_array = jnp.array(self.T)
+    
+        # Find tStart: the previous maturity in T, or 0 if mat is the first
+        # Use jnp.where to find index without dynamic shapes
+        mat_idx = jnp.searchsorted(T_array, mat)
+        tStart = jnp.where(mat_idx > 0, T_array[jnp.maximum(mat_idx - 1, 0)], 0.0)
+    
+        # Generate all possible floating times from tStart to mat
+        # Use a fixed maximum number of steps (safe upper bound)
+        max_steps = int(jnp.ceil(float(T_array[-1]) / delta)) + 2
+    
+        # Create array of potential floating times
+        steps = jnp.arange(max_steps)
+        t_floatings = tStart + steps * delta
+    
+        # Mask: include times that are < mat (with tolerance) or equal to mat for stub
+        tolerance = delta / 2.0
+        valid_mask = (t_floatings < mat - tolerance) | (jnp.abs(t_floatings - mat) < 1e-10)
+        # Also include the stub at mat if last valid t_floating < mat
+    
+        # For simplicity: include all t <= mat
+        valid_mask = t_floatings <= mat + tolerance
+        # But exclude times beyond mat
+        valid_mask = valid_mask & (t_floatings <= mat + 1e-10)
+    
+        # Vectorize spread computation
+        spread_vmap = jax.vmap(lrw.spread)
+        all_spreads = spread_vmap(t_floatings)
+    
+        # Compute masked sum and count
+        masked_spreads = jnp.where(valid_mask, all_spreads, 0.0)
+        total = jnp.sum(masked_spreads)
+        count = jnp.sum(valid_mask.astype(jnp.float32))
+    
+        # Avoid division by zero
+        Avalue = jnp.where(count > 0, total / count, 0.0)
+    
+        return Avalue
+
+
+    def getModelFullA_vmap_compatible(self, mat, lrw: LRWModel):
+        """
+        JAX vmap-compatible version of getModelFullA.
+        Computes sum of spreads from 0 to mat at DeltaFloatLeg intervals.
+        """
+        delta = float(self.DeltaFloatLeg)
+    
+        # Generate all floating times from 0 to mat
+        max_steps = int(jnp.ceil(float(self.T[-1]) / delta)) + 2
+        steps = jnp.arange(max_steps)
+        t_floatings = steps * delta
+    
+        # Mask: times < mat (with tolerance for floating point)
+        tolerance = delta / 2.0
+        valid_mask = (t_floatings < mat) & (jnp.abs(mat - t_floatings) > tolerance)
+        # Include t=0
+        valid_mask = valid_mask | (t_floatings == 0.0)
+    
+        # Vectorize spread computation  
+        spread_vmap = jax.vmap(lrw.spread)
+        all_spreads = spread_vmap(t_floatings)
+    
+        # Sum only valid spreads
+        Avalue = jnp.sum(jnp.where(valid_mask, all_spreads, 0.0))
+    
+        return Avalue
 
 if __name__ == "__main__":
     print("Testing IborCurve with JAX optimizations")
@@ -533,7 +607,7 @@ if __name__ == "__main__":
             deltaFixed = 1.0
             deltaFloat = 0.5
             
-            forward_rate = iborCurve.ForwardSwapRate(Tp, Tn, deltaFixed, deltaFloat, oisCurve)
+            forward_rate = iborCurve.forward_swap_rate(Tp, Tn, deltaFixed, deltaFloat, oisCurve)
             print(f"Forward swap rate from {Tp} to {Tn}: {forward_rate}")
         
         # Test A value retrieval

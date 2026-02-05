@@ -14,7 +14,9 @@ import pandas as pd
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import math
+import os
 
+# from ..utils.date_utils import convert_tenor_to_years
 from ..utils.jax_utils import is_jax_available, ensure_jax_array
 
 
@@ -292,7 +294,7 @@ class SwaptionData:
         vol: float,
         source: str = "",
         strike_offset: float = 0,
-        vol_multiplier: float = 1.0/10000.0
+        vol_multiplier: float = 1.0##/10000.0
     ):
         """Initialize swaption data."""
         self.data_date = data_date
@@ -374,14 +376,14 @@ class DailyData:
         """Initialize daily data."""
         self.quotation_date = quotation_date
         self.currency = currency
-        self.ois_rate_data = ois_rate_data
-        self.euribor_rate_data = libor_rate_data
+        self.ois_rate_data = ois_rate_data        
+        self.euribor_rate_data = libor_rate_data if libor_rate_data is not None else pd.DataFrame()
         self.swaption_data_cube = swaption_data_cube
         self.source = source
         
         # Data counts
-        self._nb_ois_data = len(ois_rate_data)
-        self._nb_euribor_data = len(libor_rate_data)
+        self._nb_ois_data = len(ois_rate_data) 
+        self._nb_euribor_data = len(libor_rate_data) if libor_rate_data is not None else 0
         self._nb_swaption_data = len(swaption_data_cube)
         
         # Set currency conventions
@@ -441,12 +443,13 @@ class DailyData:
         """Remove OIS data for specified tenors."""
         self.ois_rate_data = self.ois_rate_data[~self.ois_rate_data["Tenor"].isin(tenor_list)]
         self._nb_ois_data = len(self.ois_rate_data)
-    
+        
     def remove_euribor_data(self, tenor_list: List[str]) -> None:
-        """Remove Euribor data for specified tenors."""
+        if self.euribor_rate_data is None or self.euribor_rate_data.empty:
+            return
         self.euribor_rate_data = self.euribor_rate_data[~self.euribor_rate_data["Tenor"].isin(tenor_list)]
         self._nb_euribor_data = len(self.euribor_rate_data)
-    
+
     def remove_swaption_data(self, expiry_swap_tenor_tuples: List[Tuple[str, str]]) -> None:
         """Remove swaption data for specified expiry/tenor combinations."""
         self.swaption_data_cube = self.swaption_data_cube[
@@ -462,7 +465,11 @@ class DailyData:
     ) -> None:
         """Select only specified data points."""
         self.ois_rate_data = self.ois_rate_data[self.ois_rate_data["Tenor"].isin(ois_tenor_list)]
-        self.euribor_rate_data = self.euribor_rate_data[self.euribor_rate_data["Tenor"].isin(euribor_tenor_list)]
+
+        if self.euribor_rate_data is None or self.euribor_rate_data.empty:
+            self.euribor_rate_data = pd.DataFrame(columns=['Dates', 'Tickers', 'Tenor', 'Data', 'QuotationDate', 'Object'])
+        else:
+            self.euribor_rate_data = self.euribor_rate_data[self.euribor_rate_data["Tenor"].isin(euribor_tenor_list)]
         self.swaption_data_cube = self.swaption_data_cube[
             self.swaption_data_cube[['Expiry', 'Tenor']].apply(tuple, 1).isin(swaption_expiry_swap_tenor_tuples)
         ]
@@ -503,7 +510,10 @@ class DailyData:
             'Object': euribor_data_object
         }])
         
-        self.euribor_rate_data = pd.concat([self.euribor_rate_data, new_row], ignore_index=True)
+        if self.euribor_rate_data is None:
+            self.euribor_rate_data = new_row
+        else:
+            self.euribor_rate_data = pd.concat([self.euribor_rate_data, new_row], ignore_index=True)
         self._nb_euribor_data = len(self.euribor_rate_data)
     
     def insert_swaption_data(
@@ -555,13 +565,13 @@ class DailyData:
         return report
     
     def spread_summary(self) -> str:
-        """Get Euribor spread data summary."""
         report = "\n" + "============== EURIBOR data ==============="
+        if self.euribor_rate_data is None or self.euribor_rate_data.empty:
+            report += "\n" + "No EURIBOR data available"
+            return report
         report += "\n" + " dataDate,tenor,TimeToMat,rate,modelRate,marketAggregateA,modelAggregateA,marketFullA,modelFullA"
-        
         for _, row in self.euribor_rate_data.iterrows():
             report += "\n" + str(row["Object"])
-        
         return report
     
     def swaption_summary(self) -> str:
@@ -828,6 +838,10 @@ def read_rate_data(
     Optional[pd.DataFrame]
         Rate data for the specified date, or None if not found
     """
+    if os.path.exists(complete_file_name)==False:
+        print(f'Warning: Rate data file {complete_file_name} does not exist.')
+        return None
+    
     try:
         all_rate_data = pd.read_csv(complete_file_name)
         all_rate_data['QuotationDate'] = pd.to_datetime(all_rate_data['Dates'].astype(str), format="%Y%m%d")
@@ -864,6 +878,7 @@ def read_rate_data(
 def read_swaption_cube_data(
     current_date: str,
     complete_file_name: str,
+    vol_multiplier: float = 1.0,##/10000.0
     source: str = "DummyDataSource"
 ) -> Optional[pd.DataFrame]:
     """
@@ -900,7 +915,7 @@ def read_swaption_cube_data(
         current_date_data['Object'] = current_date_data.apply(
             lambda row: SwaptionData(
                 row['QuotationDate'], row['Expiry'], row['Tenor'],
-                row['Data'], source, row['StrikeOffset']
+                row['Data'], source, row['StrikeOffset'], vol_multiplier
             ), axis=1
         )
         

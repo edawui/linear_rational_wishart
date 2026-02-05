@@ -17,6 +17,26 @@ from .data_market_data import *
 from .data_fx_market_data import *
 from ..config import constants
 
+OIS_FILE_NAME={"EUR":"EUR-ESTR.csv",
+               "USD":"USD-SOFR.csv",
+               "JPY":"JPY-TONAR-SOFR.csv"
+               }
+IBOR_FILE_NAME={
+                "EUR":"NOFILE_all_EUR-EURIBOR-6M.csv",
+                # "EUR":"all_EUR-EURIBOR-6M.csv",
+               "USD":"",
+               "JPY":""
+               }
+SWAPTION_FILE_NAME={"EUR":"EUR-EURIBOR-6M-VOL.csv",
+               "USD":"USD-SOFR-ON-VOL.csv",
+               "JPY":"JPY-TONAR-ON-VOL.csv"
+               }
+FX_VOL_FILE_NAME={"EURUSD":"EURUSDVOL.csv",
+               "USDJPY":"USDJPYVOL.csv"    
+        }
+
+FX_SPOT_FILE_NAME="FxSpot.csv"
+
 # Default tenor lists
 DEFAULT_RATE_TENOR_LIST = [
     "1D", "1W", "2W", "1M", "2M", "3M", "4M", "5M", "6M", "7M", "8M", "9M",
@@ -34,12 +54,21 @@ DEFAULT_EURIBOR_TENOR_UP_TO_15Y = [
     "6M", "1Y", "2Y", "3Y", "4Y", "5Y", "6Y", "7Y", "8Y", "9Y", "10Y", "12Y", "15Y"
 ]
 
-# Swaption tenor combinations
+# # Swaption tenor combinations
 DEFAULT_SWAPTION_1Y_TO_5Y_TENORS = ["1Y", "2Y", "3Y", "4Y", "5Y"]
+# DEFAULT_SWAPTION_1Y_TO_5Y = [
+#     (expiry, tenor) 
+#     for expiry in DEFAULT_SWAPTION_1Y_TO_5Y_TENORS 
+#     for tenor in DEFAULT_SWAPTION_1Y_TO_5Y_TENORS
+# ]
+
+# Swaption tenor combinations
+DEFAULT_SWAPTION_2Y_TO_5Y_TENORS = ["2Y", "3Y", "4Y", "5Y"]
 DEFAULT_SWAPTION_1Y_TO_5Y = [
     (expiry, tenor) 
     for expiry in DEFAULT_SWAPTION_1Y_TO_5Y_TENORS 
-    for tenor in DEFAULT_SWAPTION_1Y_TO_5Y_TENORS
+    # for tenor in DEFAULT_SWAPTION_1Y_TO_5Y_TENORS
+    for tenor in DEFAULT_SWAPTION_2Y_TO_5Y_TENORS
 ]
 
 DEFAULT_SWAPTION_6M_TO_5Y_TENORS = ["6M", "18M", "1Y", "2Y", "3Y", "4Y", "5Y"]
@@ -57,7 +86,8 @@ def get_daily_data(
     libor_rate_data_file: str,
     swaption_data_file: str,
     source: str = 'DummyDataSource',
-    rate_multiplier: float = 1.0/100.0
+    rate_multiplier: float = 1.0/100.0,
+    vol_multiplier: float = 1.0##/10000.0
 ) -> Optional[DailyData]:
     """
     Load daily market data from files.
@@ -95,12 +125,12 @@ def get_daily_data(
     euribor_data = read_rate_data(
         current_date, libor_rate_data_file, False, source, rate_multiplier
     )
-    if euribor_data is None:
-        return None
+    # if euribor_data is None:
+    #     return None
     
     # Read swaption data
     swaption_data = read_swaption_cube_data(
-        current_date, swaption_data_file, source
+        current_date, swaption_data_file, vol_multiplier,source
     )
     if swaption_data is None:
         return None
@@ -125,7 +155,8 @@ def get_daily_data_up_6m_to_5y(
     libor_rate_data_file: str,
     swaption_data_file: str,
     source: str = 'DummyDataSource',
-    rate_multiplier: float = 1.0/100.0
+    rate_multiplier: float = 1.0/100.0,
+    vol_multiplier: float = 1.0##/10000.0
 ) -> Optional[DailyData]:
     """
     Load daily market data filtered for 6M to 5Y tenors.
@@ -155,7 +186,7 @@ def get_daily_data_up_6m_to_5y(
     daily_data = get_daily_data(
         current_date, currency, ois_rate_data_file,
         libor_rate_data_file, swaption_data_file,
-        source, rate_multiplier
+        source, rate_multiplier,vol_multiplier
     )
     
     if daily_data is None:
@@ -178,7 +209,8 @@ def get_daily_data_up_1y_to_5y(
     libor_rate_data_file: str,
     swaption_data_file: str,
     source: str = 'DummyDataSource',
-    rate_multiplier: float = 1.0/100.0
+    rate_multiplier: float = 1.0/100.0,
+    vol_multiplier: float = 1.0##/10000.0
 ) -> Optional[DailyData]:
     """
     Load daily market data filtered for 1Y to 5Y tenors.
@@ -208,7 +240,7 @@ def get_daily_data_up_1y_to_5y(
     daily_data = get_daily_data(
         current_date, currency, ois_rate_data_file,
         libor_rate_data_file, swaption_data_file,
-        source, rate_multiplier
+        source, rate_multiplier,vol_multiplier
     )
     
     if daily_data is None:
@@ -238,6 +270,7 @@ def get_currency_pair_data(
     fx_vol_file: str,
     source: str = 'DummyDataSource',
     rate_multiplier: float = 1.0,
+    vol_multiplier: float = 1.0,
     filter_tenors: bool = True
 ) -> Optional[CurrencyPairDailyData]:
     """
@@ -285,13 +318,13 @@ def get_currency_pair_data(
         domestic_data = get_daily_data_up_6m_to_5y(
             current_date, domestic_currency,
             domestic_ois_file, domestic_libor_file,
-            domestic_swaption_file, source, rate_multiplier
+            domestic_swaption_file, source, rate_multiplier,vol_multiplier
         )
     else:
         domestic_data = get_daily_data(
             current_date, domestic_currency,
             domestic_ois_file, domestic_libor_file,
-            domestic_swaption_file, source, rate_multiplier
+            domestic_swaption_file, source, rate_multiplier,vol_multiplier
         )
     
     if domestic_data is None:
@@ -303,13 +336,13 @@ def get_currency_pair_data(
         foreign_data = get_daily_data_up_6m_to_5y(
             current_date, foreign_currency,
             foreign_ois_file, foreign_libor_file,
-            foreign_swaption_file, source, rate_multiplier
+            foreign_swaption_file, source, rate_multiplier,vol_multiplier
         )
     else:
         foreign_data = get_daily_data(
             current_date, foreign_currency,
             foreign_ois_file, foreign_libor_file,
-            foreign_swaption_file, source, rate_multiplier
+            foreign_swaption_file, source, rate_multiplier,vol_multiplier
         )
     
     if foreign_data is None:
@@ -338,11 +371,15 @@ def get_currency_pair_data(
     return currency_pair_data
 
 
+#### TODO ### move the code below to example or test folder
+
+
 def get_testing_excel_data(
         current_date = '20250401' #'20250530'
         , ccy_pair: str = "EURUSD",
-        # folder: str = r"C:\Users\edem_\Dropbox\LinearRationalWishart_Work\Data",
-        folder: str =  constants.mkt_data_folder ##r"C:\Users\edem_\Dropbox\LinearRationalWishart_Work\Data\Data_new"  
+        rate_multiplier = 1.0,
+        vol_multiplier = 1.0,
+        folder: str =  constants.MKT_DATA_FOLDER##mkt_data_folder 
         ) -> Optional[CurrencyPairDailyData]:
     """
     Load test data for a currency pair.
@@ -359,78 +396,222 @@ def get_testing_excel_data(
     Optional[CurrencyPairDailyData]
         Test currency pair data
     """
-    usd_ois_file = folder + r"\USD-SOFR.csv"
+    # usd_ois_file = folder + r"\USD-SOFR.csv"
     # current_date = '20250530'
-    rate_multiplier = 1.0
+    # rate_multiplier = 1.0
+    # vol_multiplier = 1.0
     
-    if ccy_pair == "EURUSD":
-        fx_spot = 1.1359
-        fx_spot_file =  folder + r"\FxSpot.csv"
-        foreign_currency = "EUR"
-        foreign_ois_file = folder + r"\EUR-ESTR-SOFR.csv"
-        foreign_libor_file = folder + r"\EUR-ESTR-SOFR.csv" ##temporary+ r"\EUR-EURIBOR-6M.csv"
-        foreign_swaption_file = folder + r"\EUR-EURIBOR-6M-VOL.csv"
-        usd_swaption_file = folder + r"\USD-SOFR-ON-VOL.csv"
-        fx_vol_file = folder + r"\EURUSDVOL.csv"
-        
-        fx_df = pd.read_csv(fx_spot_file, index_col=0, parse_dates=True)
-        # fx_spot_value = fx_df[(fx_df.index == current_date) and (fx_df['Ticker'] == 'FX.EURUSD-SPOT.MID')].iloc[0]['Data']
-        fx_spot_value =   fx_df[(fx_df.index == current_date) & (fx_df['Tickers'] == 'FX.EURUSD-SPOT.MID')].iloc[0]['Data']
-        fx_spot=fx_spot_value
-        # For EURUSD, USD is domestic, EUR is foreign
-        return get_currency_pair_data(
-            current_date,
-            "USD",  # Domestic
-            "EUR",  # Foreign
-            fx_spot,
-            usd_ois_file,
-            usd_ois_file,  # Using OIS for LIBOR as well
-            usd_swaption_file,
-            foreign_ois_file,
-            foreign_libor_file,
-            foreign_swaption_file,
-            fx_vol_file,
-            "DummyDataSource",
-            rate_multiplier,
-            True  # Filter tenors
-        )
-        
-    elif ccy_pair == "USDJPY":
-        fx_spot = 143.89
-        fx_spot_file =  folder + r"\FxSpot.csv"
-        foreign_currency = "JPY"
-        foreign_ois_file = folder + r"\JPY-TONAR-SOFR.csv"
-        foreign_libor_file = folder + r"\JPY-TONAR-SOFR.csv"  # Using EUR as proxy
-        foreign_swaption_file = folder + r"\JPY-TONAR-ON-VOL.csv"  # Using EUR as proxy
-        usd_swaption_file = folder + r"\USD-SOFR-ON-VOL.csv"
-        fx_vol_file = folder + r"\USDJPYVOL.csv"
-        
-        fx_df = pd.read_csv(fx_spot_file, index_col=0, parse_dates=True)
-        # fx_spot_value = fx_df[fx_df.index == current_date and fx_df['Ticker'] == 'FX.USDJPY-SPOT.MID'].iloc[0]['Data']
-        fx_spot_value = fx_df[(fx_df.index == current_date) & (fx_df['Tickers'] == 'FX.USDJPY-SPOT.MID')].iloc[0]['Data']
-        fx_spot=fx_spot_value
+
+    foreign_currency = ccy_pair[0:3] ##EUR
+    domestic_currency = ccy_pair[3:6] ##USD
+    # if ccy_pair == "EURUSD":
+    #     foreign_currency = ccy_pair[0:3] ##EUR
+    #     domestic_currency = ccy_pair[3:6] ##USD
+    # elif ccy_pair == "USDJPY":
+    #     foreign_currency = ccy_pair[3:6] ##JPY
+    #     domestic_currency = ccy_pair[0:3] ##USD
+
+    # fx_spot = 1.0 ##todo
+    if ccy_pair not in FX_VOL_FILE_NAME:
+        raise ValueError(f"Unknown currency for FX volatility testing data: {ccy_pair}")
+    all_ccies = [foreign_currency, domestic_currency]
+    for ccy in all_ccies:
+        if ccy not in OIS_FILE_NAME:
+            raise ValueError(f"Unknown currency for OIS testing data: {ccy}")
+        if ccy not in IBOR_FILE_NAME:
+            raise ValueError(f"Unknown currency for IBOR testing data: {ccy}")
+        if ccy not in SWAPTION_FILE_NAME:
+            raise ValueError(f"Unknown currency for Swaption testing data: {ccy}")
 
 
-        # For USDJPY, JPY is domestic, USD is foreign
-        return get_currency_pair_data(
-            current_date,
-            "JPY",  # Domestic
-            "USD",  # Foreign
-            fx_spot,
-            foreign_ois_file,
-            foreign_libor_file,
-            foreign_swaption_file,
-            usd_ois_file,
-            usd_ois_file,  # Using OIS for LIBOR as well
-            usd_swaption_file,
-            fx_vol_file,
-            "DummyDataSource",
-            rate_multiplier,
-            True  # Filter tenors
+     
+    
+    foreign_ois_file = folder + "/" +  OIS_FILE_NAME[foreign_currency]# r"\EUR-ESTR-SOFR.csv"
+    foreign_libor_file = folder + "/" +  IBOR_FILE_NAME[foreign_currency]# r"\EUR-ESTR-SOFR.csv" ##temporary+ r"\EUR-EURIBOR-6M.csv"
+    foreign_swaption_file = folder + "/" +  SWAPTION_FILE_NAME[foreign_currency]#+ r"\EUR-EURIBOR-6M-VOL.csv"
+    
+    domestic_ois_file = folder + "/" +  IBOR_FILE_NAME[domestic_currency] ##+ r"\USD-SOFR.csv"
+    domestic_libor_file = folder + "/" +  IBOR_FILE_NAME[domestic_currency]# r"\EUR-ESTR-SOFR.csv" ##temporary+ r"\EUR-EURIBOR-6M.csv"
+    domestic_swaption_file = folder + "/" +  SWAPTION_FILE_NAME[domestic_currency]# r"\USD-SOFR-ON-VOL.csv"
+
+
+    fx_vol_file = folder + "/" +  FX_VOL_FILE_NAME[foreign_currency]# r"\EURUSDVOL.csv"
+    fx_spot_file =  folder + "/" +  FX_SPOT_FILE_NAME ##+ r"\FxSpot.csv"
+    
+    fx_df = pd.read_csv(fx_spot_file, index_col=0, parse_dates=True)
+    # fx_spot_value = fx_df[(fx_df.index == current_date) and (fx_df['Ticker'] == 'FX.EURUSD-SPOT.MID')].iloc[0]['Data']
+    fx_spot_ticer= 'FX.' + ccy_pair + '-SPOT.MID'
+    fx_spot_value =   fx_df[(fx_df.index == current_date) & (fx_df['Tickers'] == fx_spot_ticer)].iloc[0]['Data']
+    fx_spot=fx_spot_value
+    # For EURUSD, USD is domestic, EUR is foreign
+    return get_currency_pair_data(
+        current_date,
+        domestic_currency,##"USD",  # Domestic
+        foreign_currency,##"EUR",  # Foreign
+        fx_spot,
+        domestic_ois_file,##usd_ois_file,
+        domestic_libor_file,##usd_ois_file,  # Using OIS for LIBOR as well
+        domestic_swaption_file,##usd_swaption_file,
+        foreign_ois_file,
+        foreign_libor_file,
+        foreign_swaption_file,
+        fx_vol_file,
+        "DummyDataSource",
+        rate_multiplier,
+        vol_multiplier,
+        True  # Filter tenors
+    )
+
+    # if ccy_pair == "EURUSD":
+    #     fx_spot = 1.1359 ##todo
+    #     fx_spot_file =  folder + r"\FxSpot.csv"
+    #     foreign_currency = "EUR"
+    #     foreign_ois_file = folder + r"\EUR-ESTR-SOFR.csv"
+    #     foreign_libor_file = folder + r"\EUR-ESTR-SOFR.csv" ##temporary+ r"\EUR-EURIBOR-6M.csv"
+    #     foreign_swaption_file = folder + r"\EUR-EURIBOR-6M-VOL.csv"
+    #     usd_swaption_file = folder + r"\USD-SOFR-ON-VOL.csv"
+    #     fx_vol_file = folder + r"\EURUSDVOL.csv"
+        
+    #     fx_df = pd.read_csv(fx_spot_file, index_col=0, parse_dates=True)
+    #     # fx_spot_value = fx_df[(fx_df.index == current_date) and (fx_df['Ticker'] == 'FX.EURUSD-SPOT.MID')].iloc[0]['Data']
+    #     fx_spot_value =   fx_df[(fx_df.index == current_date) & (fx_df['Tickers'] == 'FX.EURUSD-SPOT.MID')].iloc[0]['Data']
+    #     fx_spot=fx_spot_value
+    #     # For EURUSD, USD is domestic, EUR is foreign
+    #     return get_currency_pair_data(
+    #         current_date,
+    #         "USD",  # Domestic
+    #         "EUR",  # Foreign
+    #         fx_spot,
+    #         usd_ois_file,
+    #         usd_ois_file,  # Using OIS for LIBOR as well
+    #         usd_swaption_file,
+    #         foreign_ois_file,
+    #         foreign_libor_file,
+    #         foreign_swaption_file,
+    #         fx_vol_file,
+    #         "DummyDataSource",
+    #         rate_multiplier,
+    #         vol_multiplier,
+    #         True  # Filter tenors
+    #     )
+        
+    # elif ccy_pair == "USDJPY":
+    #     fx_spot = 143.89 ##todo
+    #     fx_spot_file =  folder + r"\FxSpot.csv"
+    #     foreign_currency = "JPY"
+    #     foreign_ois_file = folder + r"\JPY-TONAR-SOFR.csv"
+    #     foreign_libor_file = folder + r"\JPY-TONAR-SOFR.csv"  # Using EUR as proxy
+    #     foreign_swaption_file = folder + r"\JPY-TONAR-ON-VOL.csv"  # Using EUR as proxy
+    #     usd_swaption_file = folder + r"\USD-SOFR-ON-VOL.csv"
+    #     fx_vol_file = folder + r"\USDJPYVOL.csv"
+        
+    #     fx_df = pd.read_csv(fx_spot_file, index_col=0, parse_dates=True)
+    #     # fx_spot_value = fx_df[fx_df.index == current_date and fx_df['Ticker'] == 'FX.USDJPY-SPOT.MID'].iloc[0]['Data']
+    #     fx_spot_value = fx_df[(fx_df.index == current_date) & (fx_df['Tickers'] == 'FX.USDJPY-SPOT.MID')].iloc[0]['Data']
+    #     fx_spot=fx_spot_value
+
+
+    #     # For USDJPY, JPY is domestic, USD is foreign
+    #     return get_currency_pair_data(
+    #         current_date,
+    #         "JPY",  # Domestic
+    #         "USD",  # Foreign
+    #         fx_spot,
+    #         foreign_ois_file,
+    #         foreign_libor_file,
+    #         foreign_swaption_file,
+    #         usd_ois_file,
+    #         usd_ois_file,  # Using OIS for LIBOR as well
+    #         usd_swaption_file,
+    #         fx_vol_file,
+    #         "DummyDataSource",
+    #         rate_multiplier,
+    #         vol_multiplier,
+    #         True  # Filter tenors
+    #     )
+    # else:
+    #     raise ValueError(f"Unknown currency pair for testing data: {ccy_pair}")
+
+
+
+def get_ir_testing_excel_data(
+        current_date = '20250401' #'20250530'
+        , ccy: str = "EUR"
+        , rate_multiplier = 1.0
+        , vol_multiplier = 1.0
+        , filter_tenors=True
+        , folder: str =  constants.MKT_DATA_FOLDER##mkt_data_folder 
+        ) -> Optional[DailyData]:
+    """
+    Load test data for a currency pair.
+    
+    Parameters
+    ----------
+    folder : str
+        Path to data folder
+    ccy : str
+        Currency pair identifier ("EUR" or "USD")
+        
+    Returns
+    -------
+    Optional[DailyData]
+        Test currency data
+    """
+    # usd_ois_file = folder + r"\USD-SOFR.csv"
+    # current_date = '20250530'
+    # rate_multiplier = 1.0
+    
+    currency =ccy
+    if ccy not in OIS_FILE_NAME:
+        raise ValueError(f"Unknown currency for OIS testing data: {ccy}")
+    if ccy not in IBOR_FILE_NAME:
+        raise ValueError(f"Unknown currency for IBOR testing data: {ccy}")
+    if ccy not in SWAPTION_FILE_NAME:
+        raise ValueError(f"Unknown currency for Swaption testing data: {ccy}")
+    
+    ois_file = folder + "/" + OIS_FILE_NAME[currency]
+    libor_file = folder + "/" + IBOR_FILE_NAME[currency]
+    swaption_file = folder + "/" + SWAPTION_FILE_NAME[currency]
+
+    # if ccy == "EUR":
+    #     currency = "EUR"
+    #     ois_file = folder + r"\EUR-ESTR.csv"
+    #     libor_file = folder + r"\all_EUR-EURIBOR-6M.csv" ##temporary+ r"\EUR-EURIBOR-6M.csv"
+    #     swaption_file = folder + r"\EUR-EURIBOR-6M-VOL.csv"
+        
+    # elif ccy == "JPY":
+    #     currency = "JPY"
+    #     ois_file = folder + r"\JPY-TONAR-SOFR.csv"
+    #     libor_file = folder + r"\JPY-TONAR-SOFR.csv"  # Using EUR as proxy
+    #     swaption_file = folder + r"\JPY-TONAR-ON-VOL.csv"  # Using EUR as proxy
+
+    # elif ccy == "USD":           
+    #     currency = "USD"
+    #     ois_file = folder + r"\USD-SOFR.csv"
+    #     libor_file = folder + r"\USD-SOFR.csv"   
+    #     swaption_file = folder + r"\USD-SOFR-ON-VOL.csv"
+    # else:
+    #     raise ValueError(f"Unknown currency for testing data: {ccy}")
+
+    # rate_multiplier = 1.0
+    # vol_multiplier = 1.0
+    source = "DummyDataSource"
+    if filter_tenors:
+        # daily_data = get_daily_data_up_6m_to_5y(
+        daily_data = get_daily_data_up_1y_to_5y(
+            current_date, currency,
+            ois_file, libor_file,
+            swaption_file, source, rate_multiplier,vol_multiplier
         )
     else:
-        raise ValueError(f"Unknown currency pair for testing data: {ccy_pair}")
-
+        daily_data = get_daily_data(
+            current_date, currency,
+            ois_file, libor_file,
+            swaption_file, source, rate_multiplier,vol_multiplier
+        )
+    return daily_data
+        
+    
 
 # Convenience functions for specific data types
 def load_rate_curve(

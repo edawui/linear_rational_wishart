@@ -1,75 +1,188 @@
-
-
 # sensitivities/delta_hedging.py
 """Delta hedging strategies for LRW model."""
 
 import math
 import cmath
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 import jax.numpy as jnp
 import scipy.integrate as sp_i
 import numpy as np
 
 from ..utils.local_functions import tr_uv
+from ..config.constants import EPSABS, EPSREL, NMAX, UR
 from ..core.expectations import compute_expectation_xy
+from .results import (
+    DeltaHedgingResult, 
+    InstrumentType, 
+    SensitivityLogger,
+)
+
 
 class DeltaHedgingCalculator:
     """Calculate delta hedging strategies for swaptions."""
     
-    def __init__(self, model):
+    def __init__(self, model, enable_logging: bool = False):
         """Initialize delta hedging calculator."""
         self.model = model
+        self.logger = SensitivityLogger("delta_hedging") if enable_logging else None
         
-    def compute_swaption_price_hedging(self, ur: float = 0.5, nmax: int = 1000) -> Dict:
-        """Compute delta hedging strategy using zero-coupon bonds."""
+    def compute_swaption_price_hedging(
+        self, 
+        ur: float = UR, #0.5
+        nmax: int = NMAX,#1000
+        return_legacy_format: bool = False
+    ) -> Union[DeltaHedgingResult, Dict]:
+        """
+        Compute delta hedging strategy using zero-coupon bonds.
+        
+        Parameters
+        ----------
+        ur : float
+            Real part of the integration contour (default: 0.5)
+        nmax : int
+            Maximum integration limit (default: 1000)
+        return_legacy_format : bool
+            If True, return legacy dict format for backward compatibility
+            
+        Returns
+        -------
+        DeltaHedgingResult or Dict
+            Structured hedging result (or legacy dict if return_legacy_format=True)
+        """
+        if self.logger:
+            self.logger.log_calculation_start(
+                "Delta (ZC)", 
+                self.model.strike,
+                maturity=self.model.maturity,
+                tenor=self.model.tenor
+            )
+        
+        # Compute model parameters (same as original)
         self.model.compute_b3_a3()
         
+        # Initialize containers for structured result
+        floating_leg = {}
+        fixed_leg = {}
+        
+        # Also build legacy format dict (same keys as original)
         delta_zc_hedging_strategy = {}
         hedging_floating_leg = {}
         hedging_fixed_leg = {}
         
-        # Floating leg
+        # Floating leg - first maturity
         zero_coupon_tn1 = self.model.bond(self.model.maturity)
         var_rho_tn1 = self.compute_var_rho_t(self.model.maturity, ur, nmax)
-        hedging_floating_leg[f"{self.model.maturity}"] = var_rho_tn1
-        delta_zc_hedging_strategy[f"DELTA:{self.model.strike}:NA_NA:ZC:FLOATINGLEG:{self.model.maturity}"] = var_rho_tn1
         
+        # Store in both formats
+        floating_leg[self.model.maturity] = var_rho_tn1
+        hedging_floating_leg[f"{self.model.maturity}"] = var_rho_tn1
+        delta_zc_hedging_strategy[f"DELTA_FOR_STRIKE:{self.model.strike}:NA_NA:ZC:FLOATINGLEG:{self.model.maturity}"] = float(var_rho_tn1)
+        
+        # Floating leg - second maturity
         zero_coupon_tn2 = self.model.bond(self.model.maturity + self.model.tenor)
         var_rho_tn2 = self.compute_var_rho_t(self.model.maturity + self.model.tenor, ur, nmax)
+        
+        # Store in both formats
+        floating_leg[self.model.maturity + self.model.tenor] = var_rho_tn2
         hedging_floating_leg[f"{self.model.maturity + self.model.tenor}"] = var_rho_tn2
-        delta_zc_hedging_strategy[f"DELTA:{self.model.strike}:NA_NA:ZC:FLOATINGLEG:{self.model.maturity + self.model.tenor}"] = var_rho_tn2
+        delta_zc_hedging_strategy[f"DELTA_FOR_STRIKE:{self.model.strike}:NA_NA:ZC:FLOATINGLEG:{self.model.maturity + self.model.tenor}"] = float(var_rho_tn2)
         
         # Fixed leg
-        fixed_leg = 0
+        fixed_leg_value = 0
         for i in range(1, int(self.model.tenor / self.model.delta_fixed) + 1):
             t1 = self.model.maturity + i * self.model.delta_fixed
             zero_coupon_t1 = self.model.bond(t1)
             var_rho_t1 = self.compute_var_rho_t(t1, ur, nmax)
+            
+            # Store in both formats
+            fixed_leg[t1] = var_rho_t1
             hedging_fixed_leg[f"{t1}"] = var_rho_t1
-            delta_zc_hedging_strategy[f"DELTA:{self.model.strike}:NA_NA:ZC:FIXEDLEG:{t1}"] = var_rho_t1
+            delta_zc_hedging_strategy[f"DELTA_FOR_STRIKE:{self.model.strike}:NA_NA:ZC:FIXEDLEG:{t1}"] = float(var_rho_t1)
             
-            fixed_leg += zero_coupon_t1 * var_rho_t1
+            fixed_leg_value += zero_coupon_t1 * var_rho_t1
+        
+        # Compute price (same formula as original)
+        price = (zero_coupon_tn1 * var_rho_tn1 
+                 - zero_coupon_tn2 * var_rho_tn2 
+                 - self.model.delta_fixed * self.model.strike * fixed_leg_value)
+        
+        delta_zc_hedging_strategy[f"DELTA_FOR_STRIKE:{self.model.strike}:NA_NA:ZC:PRICE:NA"] = float(price)
+        
+        if self.logger:
+            self.logger.logger.info(f"Delta (ZC) complete | Price={price:+.6f}")
+        
+        # Return based on format preference
+        if return_legacy_format:
+            return delta_zc_hedging_strategy
+        
+        # print(delta_zc_hedging_strategy)
+
+        # Create structured result
+        result = DeltaHedgingResult(
+            strike=self.model.strike,
+            instrument_type=InstrumentType.ZERO_COUPON,
+            price=float(price),
+            floating_leg=floating_leg,
+            fixed_leg=fixed_leg
+        )
+        
+        return result
+        
+    def compute_swaption_price_hedging_fix_float(
+        self, 
+        ur: float = UR, #0.5
+        nmax: int = NMAX,#1000
+        return_legacy_format: bool = False
+    ) -> Union[DeltaHedgingResult, Dict]:
+        """
+        Compute delta hedging strategy using swaps.
+        
+        Parameters
+        ----------
+        ur : float
+            Real part of the integration contour (default: 0.5)
+        nmax : int
+            Maximum integration limit (default: 1000)
+        return_legacy_format : bool
+            If True, return legacy dict format for backward compatibility
             
-        price = zero_coupon_tn1 * var_rho_tn1 - zero_coupon_tn2 * var_rho_tn2 - self.model.delta_fixed * self.model.strike * fixed_leg
-        zc_hedging_strategy = {"DELTA": {"ZC": {"FloatingLeg": hedging_floating_leg, "FixedLeg": hedging_fixed_leg}}}
+        Returns
+        -------
+        DeltaHedgingResult or Dict
+            Structured hedging result (or legacy dict if return_legacy_format=True)
+        """
+        if self.logger:
+            self.logger.log_calculation_start(
+                "Delta (SWAP)",
+                self.model.strike,
+                maturity=self.model.maturity,
+                tenor=self.model.tenor
+            )
         
-        delta_zc_hedging_strategy[f"DELTA:{self.model.strike}:NA_NA:ZC:PRICE:NA"] = price
-        
-        return delta_zc_hedging_strategy
-        
-    def compute_swaption_price_hedging_fix_float(self, ur: float = 0.5, nmax: int = 1000) -> Dict:
-        """Compute delta hedging strategy using swaps."""
+        # Compute model parameters (same as original)
         self.model.compute_b3_a3()
+        
+        # Initialize legacy format dict
         delta_swap_hedging_strategy = {}
+        
+        # Initialize containers for structured result
+        floating_leg = {}
+        fixed_leg = {}
         
         # Floating leg
         zero_coupon_tn1 = self.model.bond(self.model.maturity)
         zero_coupon_tn2 = self.model.bond(self.model.maturity + self.model.tenor)
-        var_rho_t1t2 = self.compute_var_rho_t_fix_float(self.model.maturity, self.model.maturity + self.model.tenor, ur, nmax)
-        delta_swap_hedging_strategy[f"DELTA:{self.model.strike}:NA_NA:SWAP:FLOATINGLEG:NA"] = var_rho_t1t2
+        var_rho_t1t2 = self.compute_var_rho_t_fix_float(
+            self.model.maturity, 
+            self.model.maturity + self.model.tenor, 
+            ur, 
+            nmax
+        )
         
-        # Fixed leg
-        fixed_leg = 0
+        delta_swap_hedging_strategy[f"DELTA_FOR_STRIKE:{self.model.strike}:NA_NA:SWAP:FLOATINGLEG:NA"] = float(var_rho_t1t2)
+        floating_leg[self.model.maturity] = var_rho_t1t2
+        
+        # Fixed leg - accumulate b4, a4, all_zc (same as original)
         b4 = 0
         a4 = jnp.zeros(self.model.x0.shape)
         all_zc = 0
@@ -83,38 +196,104 @@ class DeltaHedgingCalculator:
             a4 += math.exp(-self.model.alpha * (t1 - self.model.maturity)) * a1
             
             all_zc += zero_coupon_t1
-            
+        
+        # Compute expectation using CLASS METHOD (same as original)
         expectation_xy = self.compute_expectation_xy(b4, a4, ur, nmax)
-        var_rho = (math.exp(-self.model.alpha * self.model.maturity) / (1 + tr_uv(self.model.u1, self.model.x0))) * (expectation_xy / all_zc)
         
-        fixed_leg = self.model.delta_fixed * self.model.strike * all_zc * var_rho
+        # Compute var_rho (same formula as original)
+        var_rho = (math.exp(-self.model.alpha * self.model.maturity) / 
+                   (1 + tr_uv(self.model.u1, self.model.x0))) * (expectation_xy / all_zc)
         
-        price = (zero_coupon_tn1 - zero_coupon_tn2) * var_rho_t1t2 - fixed_leg
+        fixed_leg_value = self.model.delta_fixed * self.model.strike * all_zc * var_rho
         
-        delta_swap_hedging_strategy[f"DELTA:{self.model.strike}:NA_NA:SWAP:FIXEDLEG:NA"] = var_rho
-        delta_swap_hedging_strategy[f"DELTA:{self.model.strike}:NA_NA:SWAP:PRICE:NA"] = price
+        # Compute price (same formula as original)
+        price = (zero_coupon_tn1 - zero_coupon_tn2) * var_rho_t1t2 - fixed_leg_value
         
-        return delta_swap_hedging_strategy
+        delta_swap_hedging_strategy[f"DELTA_FOR_STRIKE:{self.model.strike}:NA_NA:SWAP:FIXEDLEG:NA"] = float(var_rho)
+        delta_swap_hedging_strategy[f"DELTA_FOR_STRIKE:{self.model.strike}:NA_NA:SWAP:PRICE:NA"] = float(price)
         
-    def compute_var_rho_t(self, t_bar: float, ur: float = 0.5, nmax: int = 1000) -> float:
-        """Compute VaR rho at time T."""
+        # Store fixed leg delta for structured result
+        fixed_leg[self.model.maturity + self.model.tenor] = var_rho
+        
+        if self.logger:
+            self.logger.logger.info(f"Delta (SWAP) complete | Price={price:+.6f}")
+        
+        # Return based on format preference
+        if return_legacy_format:
+            return delta_swap_hedging_strategy
+        
+        # Create structured result
+        result = DeltaHedgingResult(
+            strike=self.model.strike,
+            instrument_type=InstrumentType.SWAP,
+            price=float(price),
+            floating_leg=floating_leg,
+            fixed_leg=fixed_leg
+        )
+        
+        return result
+        
+    def compute_var_rho_t(self, t_bar: float, ur: float = UR, #0.5
+                          nmax: int = NMAX) -> float:
+        """
+        Compute VaR rho at time T.
+        
+        This method uses self.compute_expectation_xy (the class method).
+        
+        Parameters
+        ----------
+        t_bar : float
+            Target time
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+            
+        Returns
+        -------
+        float
+            VaR rho value
+        """
         b1_bar, a1 = self.model.compute_bar_b1_a1(t_bar - self.model.maturity)
         
         exp_alpha_t = math.exp(-self.model.alpha * (t_bar - self.model.maturity))
         b4 = exp_alpha_t * b1_bar
         a4 = exp_alpha_t * a1
         
+        # IMPORTANT: Use CLASS METHOD compute_expectation_xy (same as original)
         expectation_xy = self.compute_expectation_xy(b4, a4, ur, nmax)
         zero_coupon_tbar = self.model.bond(t_bar)
         
-        temp1 = (math.exp(-self.model.alpha * self.model.maturity) / (1 + tr_uv(self.model.u1, self.model.x0)))
+        temp1 = (math.exp(-self.model.alpha * self.model.maturity) / 
+                 (1 + tr_uv(self.model.u1, self.model.x0)))
         temp2 = expectation_xy / zero_coupon_tbar
         
         var_rho = temp1 * temp2
         return var_rho
         
-    def compute_var_rho_t_fix_float(self, t1: float, t2: float, ur: float = 0.5, nmax: int = 1000) -> float:
-        """Compute VaR rho for fixed-floating swap."""
+    def compute_var_rho_t_fix_float(self, t1: float, t2: float, ur: float = UR, #0.5
+                                    nmax: int = NMAX) -> float:
+        """
+        Compute VaR rho for fixed-floating swap.
+        
+        This method uses the IMPORTED compute_expectation_xy function (different signature).
+        
+        Parameters
+        ----------
+        t1 : float
+            First time point
+        t2 : float
+            Second time point
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+            
+        Returns
+        -------
+        float
+            VaR rho value
+        """
         delta_t = t2 - t1
         b1_bar_1, a1_1 = self.model.compute_bar_b1_a1(0)
         b1_bar, a1 = self.model.compute_bar_b1_a1(delta_t)
@@ -123,23 +302,61 @@ class DeltaHedgingCalculator:
         b4 = b1_bar_1 - exp_alpha_t * b1_bar
         a4 = a1_1 - exp_alpha_t * a1
         
-       
-        # expectation_xy = self.model.wishart.compute_expectation_xy(self.model.a3, self.model.b3, b4, np.array(a4), ur, nmax)
-        expectation_xy = compute_expectation_xy(self.model.wishart, self.model.a3, self.model.b3, b4, np.array(a4), ur, nmax)
+        # IMPORTANT: Use IMPORTED function compute_expectation_xy (same as original)
+        # This has different signature: (wishart, a3, b3, b4, a4, ur, nmax)
+        expectation_xy = compute_expectation_xy(
+            self.model.wishart, 
+            self.model.a3, 
+            self.model.b3, 
+            b4, 
+            np.array(a4), 
+            ur, 
+            nmax
+        )
+        
         zero_coupon_t2 = self.model.bond(t2)
         zero_coupon_t1 = self.model.bond(t1)
         zero_coupon_tbar = zero_coupon_t1 - zero_coupon_t2
         
-        temp1 = (math.exp(-self.model.alpha * self.model.maturity) / (1 + tr_uv(self.model.u1, self.model.x0)))
+        temp1 = (math.exp(-self.model.alpha * self.model.maturity) / 
+                 (1 + tr_uv(self.model.u1, self.model.x0)))
         temp2 = expectation_xy / zero_coupon_tbar
         
         var_rho = temp1 * temp2
         return var_rho
         
-    def compute_expectation_xy(self, b4: float, a4: jnp.ndarray
-                               , ur: float = 0.5, nmax: int = 1000 
-                               , recompute_a3_b3: bool = False) -> float:
-        """Compute E[XY] expectation."""
+    def compute_expectation_xy(
+        self, 
+        b4: float, 
+        a4: jnp.ndarray,
+        ur: float = UR, #0.5
+        nmax: int = NMAX,#1000
+        recompute_a3_b3: bool = False
+    ) -> float:
+        """
+        Compute E[XY] expectation.
+        
+        This is a CLASS METHOD that uses self.model.a3 and self.model.b3.
+        Different from the imported compute_expectation_xy function.
+        
+        Parameters
+        ----------
+        b4 : float
+            Scalar coefficient
+        a4 : jnp.ndarray
+            Matrix coefficient
+        ur : float
+            Real part of integration contour
+        nmax : int
+            Maximum integration limit
+        recompute_a3_b3 : bool
+            Whether to recompute a3 and b3
+            
+        Returns
+        -------
+        float
+            Expected value
+        """
         if recompute_a3_b3:
             self.model.compute_b3_a3()
             
@@ -163,3 +380,4 @@ class DeltaHedgingCalculator:
         expectation = res1
         
         return expectation
+    

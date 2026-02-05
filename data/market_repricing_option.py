@@ -12,7 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..data.data_fx_market_data import FxVolData
-from ..curves.oiscurve_jax import OisCurve
+from ..curves.oiscurve import OisCurve
 from ..models.fx.lrw_fx import LRWFxModel
 from ..pricing import black_scholes as bs
 from ..pricing.fx.fourier_fx_pricer import  FourierFxPricer

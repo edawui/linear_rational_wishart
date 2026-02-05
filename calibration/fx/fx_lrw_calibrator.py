@@ -25,8 +25,8 @@ from ...data.data_fx_market_data import CurrencyPairDailyData,CalibWeightType
 from ...data.market_repricing_bond import BondRepricer
 
 
-from ...curves.oiscurve_jax import OisCurve
-from ...curves.iborcurve_jax import IborCurve
+from ...curves.oiscurve import OisCurve
+from ...curves.iborcurve import IborCurve
 from ...models.fx.lrw_fx import LRWFxModel
 from ...pricing.black_scholes import black_scholes_price_fx # black_scholes_call_fx #, implied_volatility_fx
 from ..calibration_parameter_utils import ParameterManager

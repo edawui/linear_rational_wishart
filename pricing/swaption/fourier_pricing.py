@@ -5,6 +5,8 @@
 
 import math
 import cmath
+
+from networkx import omega
 import jax
 from typing import Optional, Dict, Any
 import scipy.integrate as sp_i
@@ -26,13 +28,26 @@ from ...utils.local_functions import tr_uv
 
 # import numpy as np
 
+# from ...neural_operator.model import (
+#     WishartPINNModel,
+#     WishartCharFuncNetwork,
+#     HighwayBlock,
+#     matrix_to_upper_tri,
+#     upper_tri_to_matrix
+#     )
+from ...neural_operator.inference import (
+    WishartPINNInference,
+    validate_model,
+    benchmark_throughput
+)
 
 import numpy as np
+
 
 def gauss_legendre_integral(f, a, b, n=32):
     # """
     # Integrate f over [a,b] using n-point Gauss-Legendre quadrature.
-    # Calls f only with scalar inputs — safe for non-vectorized integrands.
+    # Calls f only with scalar inputs ï¿½ safe for non-vectorized integrands.
     # """
     x, w = np.polynomial.legendre.leggauss(n)
 
@@ -80,13 +95,19 @@ class FourierPricer(BaseSwaptionPricer):
         self.use_range_kutta = use_range_kutta
         
         # Default integration parameters
-        self.ur = 0.5
-        self.nmax = 300
-        self.epsabs = 1e-7
-        self.epsrel = 1e-5
+        self.ur = UR#0.5
+        self.nmax = NMAX #300
+        self.epsabs =EPSABS# 1e-7
+        self.epsrel = EPSREL #1e-5
         # print(f"Initialized FourierPricer with u1={self.model.u1}, u2={self.model.u2}")
 
-    
+        loaded_inference = WishartPINNInference.from_saved_model(
+                            NEURAL_NETWORK_MODEL_FOLDER,##str(save_path / "final"),
+                            wishart_module_path=PACKAGE_ROOT,
+                            normalization_stats_path =NORM_STATS_PATH
+                            )
+        self.neural_network = loaded_inference
+
 
     def price_parallel(self, ur: float = None, nmax: int = None, 
           recompute_a3_b3: bool = True, n_workers: int = None) -> float:
@@ -131,7 +152,9 @@ class FourierPricer(BaseSwaptionPricer):
             price = integral_result / math.pi
             price *= math.exp(-self.model.alpha * self.model.maturity)
             price /= (1 + tr_uv(self.model.u1, self.model.x0))
-    
+            if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+                curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+                price *= curve_alpha_adjustment
             self.last_integration_error = total_error
     
             return price
@@ -152,18 +175,121 @@ class FourierPricer(BaseSwaptionPricer):
         # return self.price_with_intervals_gauss_legendre()
         # return self.price_with_intervals()
         # return self.price_with_intervals_new()
-        return self.price_with_intervals_hybrid()
+        
+        # Constants_todo.FAST_SWAPTION_PRICING= True#False
+        #Checking this hybrid method
+        if Constants_todo.FAST_SWAPTION_PRICING:
+            # print("Using FAST_SWAPTION_PRICING method")
+            return self.price_with_intervals_hybrid()
+        else:
+            return self.simple_price()
+        
+        import time as time
 
+        timer_start=time.time()
+        simple_price=self.simple_price()
+        timer_end_simple= time.time()
+
+        print(f"\n\n\nsimple_price                ={simple_price} , computing time = {timer_end_simple - timer_start}")
+
+        price_interval=  self.price_with_intervals()##ok
+        timer_end_interval= time.time()
+        print(f"price_interval              ={price_interval} , computing time = {timer_end_interval - timer_end_simple}")
+
+        price_legendre= self.price_with_intervals_gauss_legendre()##ok 
+        timer_end_legendre= time.time() 
+        print(f"price_legendre              ={price_legendre} , computing time = {timer_end_legendre - timer_end_interval}")
+
+        price_hybrid_simple_integ= self.price_with_intervals_hybrid_simple_integ() ## Ok
+        timer_end_hybrid_simple_integ= time.time()
+        print(f"price_hybrid_simple_integ   ={price_hybrid_simple_integ} , computing time = {timer_end_hybrid_simple_integ - timer_end_legendre}")
+
+        price_hybrid= self.price_with_intervals_hybrid() ## ok
+        timer_end_hybrid= time.time()
+        print(f"price_hybrid                ={price_hybrid} , computing time = {timer_end_hybrid - timer_end_hybrid_simple_integ}")  
+        
+        price_hybrid_Simpson= self.price_with_intervals_hybrid_Simpson() ## ok
+        timer_end_hybrid_Simpson= time.time()
+        print(f"price_hybrid_Simpson        ={price_hybrid_Simpson} , computing time = {timer_end_hybrid_Simpson - timer_end_hybrid}")
+        
+        # Swaption 1 Pricing test case
+        # simple_price                =0.08927136620889348 , computing time = 27.404237747192383
+        # price_interval              =0.08927136620888465 , computing time = 26.33046793937683
+        # price_legendre              =0.08927136620888479 , computing time = 58.119983434677124
+        # price_hybrid_simple_integ   =0.08927136977245885 , computing time = 4.788143634796143
+        # price_hybrid                =0.08927138075555593 , computing time = 2.6972391605377197
+        # price_hybrid_Simpson        =0.08927136620888884 , computing time = 4.741518974304199
+
+        # Swaption 2 Pricing test case
+        # simple_price                =0.284269908605332 , computing time = 25.602256774902344
+        # price_interval              =0.2842699086053232 , computing time = 25.829056978225708
+        # price_legendre              =0.28426990860532353 , computing time = 64.53767895698547
+        # price_hybrid_simple_integ   =0.28426989612134557 , computing time = 2.316826581954956
+        # price_hybrid                =0.2842698576450903 , computing time = 0.8791515827178955
+        # price_hybrid_Simpson        =0.2842699086053302 , computing time = 2.3946917057037354
+
+        # Swaption 3 Pricing test case
+        # simple_price                =0.5096624846875544 , computing time = 26.720062732696533
+        # price_interval              =0.509662484684641 , computing time = 29.773714542388916
+        # price_legendre              =0.5096624846875458 , computing time = 64.88547253608704
+        # price_hybrid_simple_integ   =0.5096625099802893 , computing time = 2.5049889087677
+        # price_hybrid                =0.5096625879340718 , computing time = 0.6985170841217041
+        # price_hybrid_Simpson        =0.509662484687453 , computing time = 2.745544195175171
+
+        return simple_price
+    
+    def price_nn(self, ur: float = None, nmax: int = None, 
+              recompute_a3_b3: bool = True) -> float:
+        """Price swaption using Fourier transform."""
+        self.validate_inputs()
+        
+        # output_dir = Path(output_dir)
+        # output_dir.mkdir(parents=True, exist_ok=True)
+        # save_path = output_dir / "models"
+
+        # loaded_inference = WishartPINNInference.from_saved_model(
+        #                     NEURAL_NETWORK_MODEL_FOLDER,##str(save_path / "final"),
+        #                     #wishart_module_path=PACKAGE_ROOT
+        #                     )
+        # self.neural_network = loaded_inference
+        # print("Neural network model loaded for FourierPricerNN.")
+        
+        if ur is not None:
+            self.ur = ur
+        if nmax is not None:
+            self.nmax = nmax
+        
+        # Constants_todo.FAST_SWAPTION_PRICING= True#False
+        #Checking this hybrid method
+        if Constants_todo.FAST_SWAPTION_PRICING:
+            return self.price_with_intervals_hybrid_nn()
+        else:
+            return self.simple_price_nn()
+        
+       
+
+        return simple_price
+   
+    def simple_price(self, ur: float = None, nmax: int = None, 
+              recompute_a3_b3: bool = True) -> float:
+        """Price swaption using Fourier transform."""
+        self.validate_inputs()
+        
+
+        if ur is not None:
+            self.ur = ur
+        if nmax is not None:
+            self.nmax = nmax
         if recompute_a3_b3:
             self.model.compute_b3_a3()
         
-        # print(f"FourierPricer.price: x0={self.model.x0},a3={self.model.a3}, b3={self.model.b3}")
+        print(f"FourierPricer.price: x0={self.model.x0},a3={self.model.a3}, b3={self.model.b3}")
         # print(f"self.nmax={self.nmax}")
         # Define integrand
         def integrand(ui):
             u = complex(self.ur, ui)
             z = u
-            
+            # print(f"Cheking value of  a3 ,{self.model.a3[0,0]}, {self.model.a3[0,1]}, {self.model.a3[1,0]},{self.model.a3[1,1]}")
             z_a3 = z * self.model.a3
             exp_z_b3 = cmath.exp(z * self.model.b3)
             
@@ -183,8 +309,11 @@ class FourierPricer(BaseSwaptionPricer):
         price = integral_result / math.pi
         price *= math.exp(-self.model.alpha * self.model.maturity)
         price /= (1 + tr_uv(self.model.u1, self.model.x0))
-        
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
         self.last_integration_error = error
+        # print(f" Simple Price: {price}")
         
         return price
 
@@ -227,7 +356,9 @@ class FourierPricer(BaseSwaptionPricer):
         price = total_integral / math.pi
         price *= math.exp(-self.model.alpha * self.model.maturity)
         price /= (1 + tr_uv(self.model.u1, self.model.x0))
-        
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
         return price
    
     def price_with_intervals_new(self, intervals=None):
@@ -264,6 +395,10 @@ class FourierPricer(BaseSwaptionPricer):
         price *= math.exp(-self.model.alpha * self.model.maturity)
         price /= (1 + tr_uv(self.model.u1, self.model.x0))
 
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
+
         return price
 
     def price_with_intervals_gauss_legendre(self, intervals=None, n_gauss=64):
@@ -297,6 +432,10 @@ class FourierPricer(BaseSwaptionPricer):
         price *= math.exp(-self.model.alpha * self.model.maturity)
         price /= (1 + tr_uv(self.model.u1, self.model.x0))
 
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
+
         return price
 
     def get_pricing_info(self) -> Dict[str, Any]:
@@ -308,123 +447,295 @@ class FourierPricer(BaseSwaptionPricer):
             "max_integration": self.nmax,
             "last_error": getattr(self, 'last_integration_error', None)
         }
-
-    def price_with_intervals_hybrid_not_with_workers(self, intervals=None, n_outer=30):#, n_inner=15):
-        """
-        Hybrid: Vectorized outer integration + reduced inner integration points
     
-        Parameters
-        ----------
-        n_outer : int
-            Number of points for outer (ui) integration
-        n_inner : int
-            Number of points for inner (time) integration in compute_b
+    def price_with_intervals_hybrid_simple_integ(self, intervals=None, n_outer=100):
+        """
+        Hybrid: Vectorized outer integration
         """
         self.validate_inputs()
-    
+
         if intervals is None:
-            intervals = np.linspace(0.0, self.nmax, 4).tolist()
-    
+            intervals = np.linspace(0.0, self.nmax, 10).tolist()
+
         self.model.compute_b3_a3()
-        a3 = self.model.a3
-        b3 = self.model.b3
+        a3 = self.model.a3  # Shape (2, 2)
+        b3 = self.model.b3  # Scalar or matrix?
         ur = self.ur
-    
-        # Create vectorized phi_one
-        @jax.jit
-        def phi_one_batch(z_array):
-            """Compute phi_one for multiple z values"""
-            return jax.vmap(
-                lambda z: self.model.wishart.phi_one(1.0, z * a3)
-            )(z_array)
-    
+
         @jax.jit
         def integrand_batch(ui_array):
             """Vectorized integrand"""
-            z_array = ur + 1j * ui_array
-            exp_zb3 = jnp.exp(z_array * b3)
-            phi_values = phi_one_batch(z_array)
-            return (exp_zb3 * phi_values / (z_array * z_array)).real
-    
+            z_array = ur + 1j * ui_array  # Shape (n_outer,)
+            
+            def single_integrand(z):
+                z_a3 = z * a3  # Scalar * (2,2) matrix = (2,2) matrix
+                exp_zb3 = jnp.exp(z * b3)
+                phi_val = self.model.wishart.phi_one(1.0, z_a3)
+                return (exp_zb3 * phi_val / (z * z)).real
+            
+            return jax.vmap(single_integrand)(z_array)
+
         total = 0.0
-    
+
         for a, b in zip(intervals[:-1], intervals[1:]):
             ui_vals = jnp.linspace(a, b, n_outer)
             integrand_vals = integrand_batch(ui_vals)
             val = jnp.trapezoid(integrand_vals, ui_vals)
             total += val
-    
+
         price = float(total) / math.pi
         price *= math.exp(-self.model.alpha * self.model.maturity)
         price /= (1 + tr_uv(self.model.u1, self.model.x0))
-    
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
         return price
-
-    def price_with_intervals_hybrid(self, intervals=None, n_outer=30, n_workers=1):
+  
+    def price_with_intervals_hybrid(self, intervals=None, n_outer=None):#100):
         """
-        Hybrid: Vectorized outer integration + parallel interval processing
-    
-        Parameters
-        ----------
-        n_outer : int
-            Number of points for outer (ui) integration
-        n_workers : int
-            Number of parallel workers. Use 1 for PC, 5+ for Colab
+        Hybrid: Vectorized outer integration
         """
         self.validate_inputs()
-    
-        if intervals is None:            
+
+        if intervals is None:
             intervals = np.linspace(0.0, self.nmax, FFT_SWAPTION_NB_INTERVALS).tolist()
-    
+        if n_outer is None:
+            n_outer = INTEG_NB_POINTS#100
         self.model.compute_b3_a3()
         a3 = self.model.a3
         b3 = self.model.b3
         ur = self.ur
-    
-        # Create vectorized phi_one
+
+        def single_integrand(z):
+            z_a3 = z * a3
+            exp_zb3 = jnp.exp(z * b3)
+            phi_val = self.model.wishart.phi_one(1.0, z_a3)
+            return (exp_zb3 * phi_val / (z * z)).real
+
+        # Pre-compute all ui_vals for all intervals at once
+        interval_starts = jnp.array(intervals[:-1])
+        interval_ends = jnp.array(intervals[1:])
+        n_intervals = len(interval_starts)
+        
+        # Shape: (n_intervals, n_outer)
+        t = jnp.linspace(0.0, 1.0, n_outer)
+        ui_vals_all = interval_starts[:, None] + t[None, :] * (interval_ends - interval_starts)[:, None]
+        
+        # Flatten to (n_intervals * n_outer,)
+        ui_flat = ui_vals_all.flatten()
+        z_flat = ur + 1j * ui_flat
+
         @jax.jit
-        def phi_one_batch(z_array):
-            """Compute phi_one for multiple z values"""
-            return jax.vmap(
-                lambda z: self.model.wishart.phi_one(1.0, z * a3)
-            )(z_array)
-    
+        def compute_all_integrands(z_flat):
+            return jax.vmap(single_integrand)(z_flat)
+
+        # Compute all integrand values at once
+        integrand_flat = compute_all_integrands(z_flat)
+        
+        # Reshape back to (n_intervals, n_outer)
+        integrand_all = integrand_flat.reshape(n_intervals, n_outer)
+        
+        # Trapezoid rule for each interval
+        @jax.jit
+        def trapezoid_all(integrand_all, ui_vals_all):
+            return jax.vmap(jnp.trapezoid)(integrand_all, ui_vals_all)
+        
+        interval_results = trapezoid_all(integrand_all, ui_vals_all)
+        total = float(jnp.sum(interval_results))
+
+        price = total / math.pi
+        price *= math.exp(-self.model.alpha * self.model.maturity)
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
+        
+        price /= (1 + tr_uv(self.model.u1, self.model.x0))
+
+        return price
+   
+    def price_with_intervals_hybrid_Simpson(self, intervals=None, n_outer=101):  # Must be odd for Simpson
+        """
+        Hybrid: Using Simpson's rule for better accuracy
+        """
+        self.validate_inputs()
+
+        if intervals is None:
+            intervals = np.linspace(0.0, self.nmax, FFT_SWAPTION_NB_INTERVALS).tolist()
+
+        self.model.compute_b3_a3()
+        a3 = self.model.a3
+        b3 = self.model.b3
+        ur = self.ur
+
         @jax.jit
         def integrand_batch(ui_array):
-            """Vectorized integrand"""
             z_array = ur + 1j * ui_array
-            exp_zb3 = jnp.exp(z_array * b3)
-            phi_values = phi_one_batch(z_array)
-            return (exp_zb3 * phi_values / (z_array * z_array)).real
-    
-        # Define function to integrate one interval
-        def integrate_interval(a, b):
-            """Integrate over a single interval"""
-            ui_vals = jnp.linspace(a, b, n_outer)
+            
+            def single_integrand(z):
+                z_a3 = z * a3
+                exp_zb3 = jnp.exp(z * b3)
+                phi_val = self.model.wishart.phi_one(1.0, z_a3)
+                return (exp_zb3 * phi_val / (z * z)).real
+            
+            return jax.vmap(single_integrand)(z_array)
+
+        @jax.jit
+        def simpson(y, x):
+            """Simpson's rule integration"""
+            n = len(x)
+            h = (x[-1] - x[0]) / (n - 1)
+            weights = jnp.ones(n)
+            weights = weights.at[1:-1:2].set(4)  # Odd indices
+            weights = weights.at[2:-1:2].set(2)  # Even indices
+            return h / 3 * jnp.sum(weights * y)
+
+        total = 0.0
+        for a, b in zip(intervals[:-1], intervals[1:]):
+            n_points = n_outer if n_outer % 2 == 1 else n_outer + 1  # Ensure odd
+            ui_vals = jnp.linspace(a, b, n_points)
             integrand_vals = integrand_batch(ui_vals)
-            val = jnp.trapezoid(integrand_vals, ui_vals)
-            return float(val)
-    
-        # Parallel processing
-        n_workers= FFT_SWAPTION_PRICING_WORKERS
-        if n_workers == 1:
-            # Sequential (original behavior)
-            results = [integrate_interval(a, b) 
-                       for a, b in zip(intervals[:-1], intervals[1:])]
-        else:
-            # Parallel processing
-            interval_pairs = list(zip(intervals[:-1], intervals[1:]))
-        
-            # Use threading backend for JAX/GPU compatibility
-            results = Parallel(n_jobs=n_workers, backend='threading')(
-                delayed(integrate_interval)(a, b) 
-                for a, b in interval_pairs
-            )
-        # print(f"Hybrid pricing with {n_workers} workers")
-        total = sum(results)
-    
+            val = simpson(integrand_vals, ui_vals)
+            total += float(val)
+
         price = total / math.pi
         price *= math.exp(-self.model.alpha * self.model.maturity)
         price /= (1 + tr_uv(self.model.u1, self.model.x0))
-    
+
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
+
         return price
+    
+    def price_with_intervals_hybrid_nn(self, intervals=None, n_outer=None):#100):
+        """
+        Hybrid: Vectorized outer integration
+        """
+        self.validate_inputs()
+
+        if intervals is None:
+            intervals = np.linspace(0.0, self.nmax, FFT_SWAPTION_NB_INTERVALS).tolist()
+        if n_outer is None:
+            n_outer = INTEG_NB_POINTS#100
+        self.model.compute_b3_a3()
+        a3 = self.model.a3
+        b3 = self.model.b3
+        ur = self.ur
+
+        T= self.model.maturity        
+        m= self.model.m
+        omega= self.model.omega
+        sigma= self.model.sigma
+        x0= self.model.x0
+
+        def single_integrand(z):
+            z_a3 = z * a3
+            exp_zb3 = jnp.exp(z * b3)
+            # phi_val = self.model.wishart.phi_one(1.0, z_a3)
+            theta = z_a3
+            # phi_val = self.neural_network.compute_characteristic_function(T, theta, m, omega, sigma, x0)
+            phi_val = self.neural_network.compute_characteristic_function_Pricing(T, theta, m, omega, sigma, x0)
+
+            return (exp_zb3 * phi_val / (z * z)).real
+
+        # Pre-compute all ui_vals for all intervals at once
+        interval_starts = jnp.array(intervals[:-1])
+        interval_ends = jnp.array(intervals[1:])
+        n_intervals = len(interval_starts)
+        
+        # Shape: (n_intervals, n_outer)
+        t = jnp.linspace(0.0, 1.0, n_outer)
+        ui_vals_all = interval_starts[:, None] + t[None, :] * (interval_ends - interval_starts)[:, None]
+        
+        # Flatten to (n_intervals * n_outer,)
+        ui_flat = ui_vals_all.flatten()
+        z_flat = ur + 1j * ui_flat
+
+        @jax.jit
+        def compute_all_integrands(z_flat):
+            return jax.vmap(single_integrand)(z_flat)
+
+        # Compute all integrand values at once
+        integrand_flat = compute_all_integrands(z_flat)
+        
+        # Reshape back to (n_intervals, n_outer)
+        integrand_all = integrand_flat.reshape(n_intervals, n_outer)
+        
+        # Trapezoid rule for each interval
+        @jax.jit
+        def trapezoid_all(integrand_all, ui_vals_all):
+            return jax.vmap(jnp.trapezoid)(integrand_all, ui_vals_all)
+        
+        interval_results = trapezoid_all(integrand_all, ui_vals_all)
+        total = float(jnp.sum(interval_results))
+
+        price = total / math.pi
+        price *= math.exp(-self.model.alpha * self.model.maturity)
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
+        
+        price /= (1 + tr_uv(self.model.u1, self.model.x0))
+
+        return price
+  
+    def simple_price_nn(self, ur: float = None, nmax: int = None, 
+              recompute_a3_b3: bool = True) -> float:
+        """Price swaption using Fourier transform."""
+        self.validate_inputs()
+        
+
+        if ur is not None:
+            self.ur = ur
+        if nmax is not None:
+            self.nmax = nmax
+        if recompute_a3_b3:
+            self.model.compute_b3_a3()
+        
+        T= self.model.maturity        
+        m= self.model.m
+        omega= self.model.omega
+        sigma= self.model.sigma
+        x0= self.model.x0
+
+        # print(f"FourierPricer.price: x0={self.model.x0},a3={self.model.a3}, b3={self.model.b3}")
+        # print(f"self.nmax={self.nmax}")
+        # Define integrand
+        def integrand(ui):
+            u = complex(self.ur, ui)
+            z = u
+            
+            z_a3 = z * self.model.a3
+            exp_z_b3 = cmath.exp(z * self.model.b3)
+            
+            if self.use_range_kutta:
+                # phi1 = self.model.wishart.phi_one(1, z_a3)
+                theta = z_a3
+                phi1 = self.neural_network.compute_characteristic_function(T, theta, m, omega, sigma, x0)
+                # phi1 = self.neural_network.compute_characteristic_function_Pricing(T, theta, m, omega, sigma, x0)
+
+
+            else:
+                phi1 = self.model.wishart.phi_one_approx_b(1, z_a3)
+                
+            result = exp_z_b3 * phi1 / (z * z)
+            return result.real
+            
+        # Numerical integration
+        integral_result, error = sp_i.quad(integrand, 0, self.nmax, 
+                                          epsabs=self.epsabs, epsrel=self.epsrel)
+        
+        # Scale result
+        price = integral_result / math.pi
+        price *= math.exp(-self.model.alpha * self.model.maturity)
+        price /= (1 + tr_uv(self.model.u1, self.model.x0))
+        if self.model.pseudo_inverse_smoothing and self.model.initial_curve_alpha is not None:
+            curve_alpha_adjustment = self.model.initial_curve_alpha.get_alpha(self.model.maturity)
+            price *= curve_alpha_adjustment
+        self.last_integration_error = error
+        # print(f" Simple Price: {price}")
+        
+        return price
+
+   ###end
+        

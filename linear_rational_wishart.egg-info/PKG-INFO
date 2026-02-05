@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: linear_rational_wishart
+Version: 0.1.0
+Summary: Linear Rational Wishart models for FX pricing
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: scipy
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: jupyter; extra == "dev"

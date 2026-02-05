@@ -99,7 +99,7 @@ class TestLRWModel:
         assert isinstance(spread_inf, (float, jnp.ndarray))
         
         # Test spread at different times
-        spreads = [standard_model.Spread(t) for t in [0.5, 1.0, 2.0]]
+        spreads = [standard_model.spread(t) for t in [0.5, 1.0, 2.0]]
         assert all(isinstance(s, (float, jnp.ndarray)) for s in spreads)
     
     def test_swap_rate_calculation(self, standard_model):

@@ -3,6 +3,7 @@ Main LRW interest rate model implementation.
 
 models/interest_rate/lrw_model.py
 """
+from pyexpat import model
 import jax
 import jax.numpy as jnp
 from jax import vmap, jit
@@ -12,10 +13,6 @@ from typing import Tuple, Optional, Dict, Any
 import numpy as np
 from typing import Union, List
 import jax.numpy as jnp
-# import numpy as np
-# from typing import Union, List
-# from jax import vmap, jit
-# from functools import partial
 
 from .base import BaseInterestRateModel
 from .config import LRWModelConfig,SwaptionConfig
@@ -122,11 +119,46 @@ class LRWModel(BaseInterestRateModel):
         self.swaption_config = swaption_config
         
         super().set_swaption_config(swaption_config)
+        if hasattr(self, 'wishart'):
+            self.wishart.maturity = swaption_config.maturity
         # Recompute b3 and a3 coefficients
         # # self.compute_b3_a3()
         # self.a3 = self.a3.reshape(self.x0.shape)
         # self.b3 = self.b3.reshape((1, 1))
+    
+    def set_model_params(self, n, alpha, x0, omega, m, sigma):
+        """Update model parameters and reinitialize Wishart parameters."""
+        self.model_config.n = n
+        self.model_config.alpha = alpha
+        self.model_config.x0 = x0.copy()      # Copy arrays to avoid external mutation
+        self.model_config.omega = omega.copy()
+        self.model_config.m = m.copy()
+        self.model_config.sigma = sigma.copy()
+    
 
+        self.model_config.u1=self.u1
+        self.model_config.u2=self.u2
+        self.model_config.is_spread=self.is_spread
+            
+        # self.model_config.use_range_kutta_for_b=self.use_range_kutta_for_b
+        # self.model_config.compute_equity_style_vega=self.compute_equity_style_vega
+        # self.model_config.pseudo_inverse_smoothing=self.pseudo_inverse_smoothing
+    
+
+
+        self.set_wishart_parameter(self.model_config)
+
+    def set_alpha(self, alpha: float):
+        """Set interest rate alpha."""
+        
+        self.set_model_params(self.n
+                             ,alpha #new parameters
+                             ,self.x0
+                             ,self.omega
+                             ,self.m
+                             ,self.sigma 
+                            )
+    
     def set_wishart_parameter(self,  config: LRWModelConfig):
         """
         Set Wishart parameters.
@@ -167,6 +199,7 @@ class LRWModel(BaseInterestRateModel):
          
         
         self.wishart.use_range_kutta_for_b = config.use_range_kutta_for_b
+        self.wishart.maturity = self.swaption_config.maturity
         
         # Weight matrices
         self.u1 = config.u1 if config.u1 is not None else jnp.zeros(self.x0.shape)
@@ -518,7 +551,7 @@ class LRWModel(BaseInterestRateModel):
         bond_prices_t = self.bond_vectorized(maturities)
         bond_prices_t_plus_tenor = self.bond_vectorized(maturities + tenor)
         
-        # Forward rate: f(t) = -d(ln P(t))/dt ˜ -(ln P(t+dt) - ln P(t))/dt
+        # Forward rate: f(t) = -d(ln P(t))/dt ï¿½ -(ln P(t+dt) - ln P(t))/dt
         forward_rates = -(np.log(bond_prices_t_plus_tenor) - np.log(bond_prices_t)) / tenor
         
         return forward_rates
@@ -654,7 +687,13 @@ class LRWModel(BaseInterestRateModel):
         a2 : jnp.ndarray
             a2 coefficient matrix
         """
-        return self.wishart.compute_mean_decompose(self.u2, t)
+        # return self.wishart.compute_mean_decompose(self.u2, t)
+        if self.pseudo_inverse_smoothing and self.initial_curve_alpha is not None:
+            b2, a2 = self.wishart.compute_mean_decompose(self.u2, t)
+            curve_alpha_adjustment = self.initial_curve_alpha.get_alpha(t)
+            return curve_alpha_adjustment * (b2), curve_alpha_adjustment * a2
+        else:
+            return self.wishart.compute_mean_decompose(self.u2, t)
     
     def compute_swap_rate(self) -> float:
         """
@@ -677,7 +716,7 @@ class LRWModel(BaseInterestRateModel):
                 ti = self.maturity + i * self.delta_float
                 spread_ti = self.spread(ti)
                 floating_leg_spread += spread_ti
-        floating_leg_spread=0.0
+        # floating_leg_spread=0.0
         # Fixed leg
         fixed_leg = 0
         for i in range(1, int(self.tenor / self.delta_fixed) + 1):

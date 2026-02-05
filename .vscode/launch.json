@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Example",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/lrw_jump_calibration_example.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

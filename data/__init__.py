@@ -4,7 +4,7 @@
 __all__ = [
     "data_fx_market_data",
     "data_helpers",
-    "data_init",
+    # "data_init",
     "data_market_data",
     "market_repricing_bond",
     "market_repricing_option",

@@ -9,7 +9,7 @@ from typing import Optional, Dict, Tuple, List
 import jax.numpy as jnp
 import numpy as np
 
-from wishart_process.models.interest_rate import LRWModel
+from ..models.interest_rate.lrw_model import LRWModel
 from .alpha_curve import getInitialAlpha
 
 
@@ -57,7 +57,8 @@ class LRWCalibrator:
         """
         # Compute initial model ZC values
         initial_model_values = jnp.array([
-            self.model.Bond(t) for t in market_dates
+            self.model.bond(t) for t in market_dates
+            # self.model.Bond(t) for t in market_dates
         ])
         
         if use_pseudo_inverse:
@@ -121,7 +122,8 @@ class LRWCalibrator:
         jnp.ndarray
             Model ZC prices
         """
-        return jnp.array([self.model.Bond(t) for t in dates])
+        # return jnp.array([self.model.Bond(t) for t in dates])
+        return jnp.array([self.model.bond(t) for t in dates])
     
     def validate_gindikin_condition(self) -> bool:
         """
@@ -132,7 +134,7 @@ class LRWCalibrator:
         bool
             True if condition is satisfied
         """
-        return self.model.Wishart.check_gindikin()
+        return self.model.wishart.check_gindikin()
     
     def adjust_omega_for_gindikin(self, beta: float = 4.0) -> None:
         """
@@ -159,4 +161,4 @@ class LRWCalibrator:
                     break
         
         self.model.omega = omega
-        self.model.Wishart.omega = omega
+        self.model.wishart.omega = omega

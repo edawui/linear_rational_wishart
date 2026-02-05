@@ -43,13 +43,13 @@ class CalibrationConstraints:
         
         bounds = {
             'alpha': 0.001,
-            'x0_diag': np.array([0.0001] * n),
-            'x0_off_diag': -0.1,
-            'omega_diag': np.array([0.0001] * n),
-            'omega_off_diag': -0.1,
+            'x0_diag': np.array([1.0e-6] * n),
+            'x0_off_diag': -0.9, #-0.1,
+            'omega_diag': np.array([1.0e-6] * n),
+            'omega_off_diag': -0.9, #-0.1,
             'm_diag': np.array([-10.0] * n),
-            'sigma_diag': np.array([0.0001] * n),
-            'sigma_off_diag': -0.5
+            'sigma_diag': np.array([1.0e-7] * n),
+            'sigma_off_diag':-0.9 #-0.5
         }
         
         return bounds
@@ -60,13 +60,13 @@ class CalibrationConstraints:
         
         bounds = {
             'alpha': 0.2,
-            'x0_diag': np.array([1.0] * n),
-            'x0_off_diag': 0.1,
-            'omega_diag': np.array([1.0] * n),
-            'omega_off_diag': 0.1,
+            'x0_diag':  np.array([10.0] * n),#np.array([1.0] * n),
+            'x0_off_diag': 0.9, #0.1,
+            'omega_diag': np.array([10.0] * n),#np.array([1.0] * n),
+            'omega_off_diag': 0.9, #0.1,
             'm_diag': np.array([-0.001] * n),
-            'sigma_diag': np.array([1.0] * n),
-            'sigma_off_diag': 0.5
+            'sigma_diag': np.array([10.0] * n),#np.array([1.0] * n),
+            'sigma_off_diag': 0.9#0.5
         }
         
         return bounds

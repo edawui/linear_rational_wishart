@@ -2,8 +2,8 @@
 
 # Available modules
 __all__ = [
-    "iborcurve_jax",
-    "oiscurve_jax",
+    "iborcurve",
+    "oiscurve",
 ]
 
 # Note: Submodules are not imported automatically to avoid circular imports.

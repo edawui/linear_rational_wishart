@@ -21,91 +21,19 @@ import re
 import json
 from datetime import datetime
 
-import sys
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-# from set_path import *
-
-# main_project_root = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
-
-
-# def complete_setup():
-"""Setup that forces constants to update everywhere"""
-    
-# 1. Clear constants cache if it exists
-if 'constants' in sys.modules:
-    del sys.modules['constants']
-
-# 2. Detect environment
-if 'google.colab' in sys.modules:
-    from google.colab import drive
-    drive.mount('/content/drive')
-    project_root = "/content/drive/MyDrive/LinearRationalWishart_Work/Code/ED/LinearRationalWishart/LinearRationalWishart_NewCode"
-else:
-    project_root = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
-
-mkt_data_folder = os.path.join(project_root, "wishart_processes", "mkt_data", "Data_new")
-
-# 3. Set environment variables BEFORE importing constants
-os.environ['FORCE_PROJECT_ROOT'] = project_root
-os.environ['FORCE_MKT_DATA_FOLDER'] = mkt_data_folder
-
-# 4. Create directories and set working directory
-os.makedirs(project_root, exist_ok=True)
-os.makedirs(mkt_data_folder, exist_ok=True)
-os.chdir(project_root)
-
-main_project_root = project_root  # Ensure main_project_root is set correctly
-
-
-
-
-
-try:
    
-    from ...data.data_helpers  import * 
-    from ...data.data_fx_market_data  import CurrencyPairDailyData
-    from ...calibration.fx.base import CalibrationConfig, OptimizationMethod, CalibrationResult
-    from ...calibration.fx.fx_lrw_calibrator import LrwFxCalibrator
-    from ...models.fx.base import BaseFxModel
-    from ...models.fx.lrw_fx import LRWFxModel
-    from ...models.fx.currency_basket import CurrencyBasket
-    from ...pricing.fx.fourier_fx_pricer import FourierFxPricer
-    from ...pricing.fx.mc_fx_pricer import MonteCarloFxPricer
-    from ...pricing.implied_vol_black_scholes import * 
-    from ...pricing.black_scholes import * 
-  
-except ImportError:
-    # sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-    # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
-    # sys.path.insert(0, project_root)
+from linear_rational_wishart.data.data_helpers  import *#get_testing_excel_data #* 
+from linear_rational_wishart.data.data_fx_market_data  import CurrencyPairDailyData
+from linear_rational_wishart.calibration.fx.fx_lrw_calibrator import LrwFxCalibrator
+from linear_rational_wishart.calibration.fx.base import CalibrationConfig,OptimizationMethod, CalibrationResult
 
-    current_file = os.path.abspath(__file__)
-    project_root = current_file
-
-    # Go up until we find the wishart_processes directory
-    while os.path.basename(project_root) != "LinearRationalWishart_NewCode" and project_root != os.path.dirname(project_root):
-        project_root = os.path.dirname(project_root)
-
-    if os.path.basename(project_root) != "LinearRationalWishart_NewCode":
-        # Fallback to hardcoded path
-        project_root = main_project_root #r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
-
-    print(f"Using project root: {project_root}")
-    sys.path.insert(0, project_root)
-
-
-    from linear_rational_wishart.data.data_helpers  import * 
-    from linear_rational_wishart.data.data_fx_market_data  import CurrencyPairDailyData
-    from linear_rational_wishart.calibration.fx.fx_lrw_calibrator import LrwFxCalibrator
-    from linear_rational_wishart.calibration.fx.base import CalibrationConfig,OptimizationMethod, CalibrationResult
-
-    from linear_rational_wishart.models.fx.base import BaseFxModel
-    from linear_rational_wishart.models.fx.lrw_fx import LRWFxModel 
-    from linear_rational_wishart.models.fx.currency_basket import CurrencyBasket
-    from linear_rational_wishart.pricing.fx.fourier_fx_pricer import FourierFxPricer
-    from linear_rational_wishart.pricing.fx.mc_fx_pricer import MonteCarloFxPricer   
-    from linear_rational_wishart.pricing.implied_vol_black_scholes import * 
-    from linear_rational_wishart.pricing.black_scholes import * 
+from linear_rational_wishart.models.fx.base import BaseFxModel
+from linear_rational_wishart.models.fx.lrw_fx import LRWFxModel 
+from linear_rational_wishart.models.fx.currency_basket import CurrencyBasket
+from linear_rational_wishart.pricing.fx.fourier_fx_pricer import FourierFxPricer
+from linear_rational_wishart.pricing.fx.mc_fx_pricer import MonteCarloFxPricer   
+from linear_rational_wishart.pricing.implied_vol_black_scholes import * 
+from linear_rational_wishart.pricing.black_scholes import * 
 
 # matplotlib.use('TkAgg')  # or 'Qt5Agg'
 # # Enable interactive mode globally
@@ -115,9 +43,8 @@ matplotlib.use('Agg')  # or 'Qt5Agg'
 # Enable interactive mode globally
 plt.ioff()
 
-# curve_calibrated_model_report = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\wishart_processes\curve_calibrated_model_report.csv"
-curve_calibrated_model_report =  main_project_root+r"\wishart_processes\curve_calibrated_model_report.csv"
-
+PACKAGE_ROOT = Path(__file__).parent.resolve()
+curve_calibrated_model_report = PACKAGE_ROOT / "curve_calibrated_model_report.csv"
 
 @contextmanager
 def no_display():
@@ -151,9 +78,6 @@ def get_initial_sigma(x0:np.ndarray,u_i:np.ndarray,u_j:np.ndarray
     initial_sigma = initial_vol_mean /temp
     initial_sigma = np.sqrt(initial_sigma) * np.array([[1.0, 0.0], [0.0, 1.0]])
     return initial_sigma
-
-
-
 
 def get_curve_calibrated_model(date, file=curve_calibrated_model_report):
     """
@@ -321,7 +245,6 @@ def get_curve_calibrated_model(date, file=curve_calibrated_model_report):
     )
     
     return lrwfx1
-
 
 def get_curve_calibrated_model_old():
          x0= np.array([[0.5236196019081235, 0.004530853181353052], [0.004530853181353052, 1.0006205529436851e-06]] )

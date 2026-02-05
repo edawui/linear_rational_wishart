@@ -14,7 +14,7 @@ import copy
 
 
 # from ..curves import OisCurve, IborCurve
-from ..curves.oiscurve_jax import OisCurve
+from ..curves.oiscurve import OisCurve
 from ..models.interest_rate.lrw_model import LRWModel
 
 # from ..data.data_fx_market_data import FxVolData

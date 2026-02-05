@@ -15,47 +15,14 @@ from pathlib import Path
 import matplotlib
 import math
 import cmath
-main_project_root = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
 
-try:
-   
-    from ...models.fx.base import BaseFxModel
-    from ...models.fx.lrw_fx import LRWFxModel
-    from ...models.fx.currency_basket import CurrencyBasket
-    from ...pricing.fx.fourier_fx_pricer import FourierFxPricer
-    from ...pricing.fx.mc_fx_pricer import MonteCarloFxPricer
-    from ...pricing.implied_vol_black_scholes import * 
-    from ...pricing.black_scholes import * 
-  
-except ImportError:
-    # sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-    # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
-    # sys.path.insert(0, project_root)
-
-    current_file = os.path.abspath(__file__)
-    project_root = current_file
-
-    # Go up until we find the wishart_processes directory
-    while os.path.basename(project_root) != "LinearRationalWishart_NewCode" and project_root != os.path.dirname(project_root):
-        project_root = os.path.dirname(project_root)
-
-    if os.path.basename(project_root) != "LinearRationalWishart_NewCode":
-        # Fallback to hardcoded path
-        # project_root = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
-        project_root = main_project_root #r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode"
-
-
-    print(f"Using project root: {project_root}")
-    sys.path.insert(0, project_root)
-
-
-    from linear_rational_wishart.models.fx.base import BaseFxModel
-    from linear_rational_wishart.models.fx.lrw_fx import LRWFxModel 
-    from linear_rational_wishart.models.fx.currency_basket import CurrencyBasket
-    from linear_rational_wishart.pricing.fx.fourier_fx_pricer import FourierFxPricer
-    from linear_rational_wishart.pricing.fx.mc_fx_pricer import MonteCarloFxPricer   
-    from linear_rational_wishart.pricing.implied_vol_black_scholes import * 
-    from linear_rational_wishart.pricing.black_scholes import * 
+from linear_rational_wishart.models.fx.base import BaseFxModel
+from linear_rational_wishart.models.fx.lrw_fx import LRWFxModel 
+from linear_rational_wishart.models.fx.currency_basket import CurrencyBasket
+from linear_rational_wishart.pricing.fx.fourier_fx_pricer import FourierFxPricer
+from linear_rational_wishart.pricing.fx.mc_fx_pricer import MonteCarloFxPricer   
+from linear_rational_wishart.pricing.implied_vol_black_scholes import * 
+from linear_rational_wishart.pricing.black_scholes import * 
 
 matplotlib.use('TkAgg')  # or 'Qt5Agg'
 

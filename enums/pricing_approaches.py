@@ -9,9 +9,9 @@ from typing import Union
 from ..models.interest_rate.lrw_model import LRWModel
 # from ..models.interest_rate.base import BaseSwaptionPricer
 from ..pricing.swaption.base import BaseSwaptionPricer
-from lrw_Jax.wishart_processes.pricing.swaption.lrw-swaption-pricing import FourierSwaptionPricer
-from lrw_Jax.wishart_processes.pricing.swaption.lrw-cd-approximation import CollinDufresneSwaptionPricer
-from lrw_Jax.wishart_processes.pricing.swaption.lrw-gamma-approximation import GammaApproximationPricer
+from ..pricing.swaption.fourier_pricing import FourierPricer
+from ..pricing.swaption.collin_dufresne import CollinDufresneSwaptionPricer
+from ..pricing.swaption.gamma_approximation import GammaApproximationPricer
 
 
 class PricingApproach(Enum):
@@ -84,9 +84,9 @@ class PricerFactory:
         
         # Create appropriate pricer
         if approach == PricingApproach.RANGE_KUTTA:
-            return FourierSwaptionPricer(model)
+            return FourierPricer(model) ##FourierSwaptionPricer(model)
         elif approach == PricingApproach.FOURIER:
-            return FourierSwaptionPricer(model)
+            return FourierPricer(model)
         elif approach == PricingApproach.COLLIN_DUFRESNE:
             return CollinDufresneSwaptionPricer(model)
         elif approach == PricingApproach.GAMMA_APPROXIMATION:

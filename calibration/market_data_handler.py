@@ -6,13 +6,16 @@ OIS curves, IBOR curves, and swaption data.
 """
 
 from typing import Optional, Dict, List, Tuple, cast
+import warnings
 import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from ..data import MarketData
-from ..curves.iborcurve_jax import IborCurve
-from ..pricing.bachelier import bachelier_price, implied_volatility
+from ..data.data_market_data import * #MarketData
+from ..curves.iborcurve import IborCurve
+from ..pricing.bachelier import bachelier_price, implied_normal_volatility ##implied_volatility
+from ..curves.oiscurve import OisCurve
+from ..models.interest_rate.config import *
 
 
 class MarketDataHandler:
@@ -20,18 +23,19 @@ class MarketDataHandler:
     Handles market data processing for LRW Jump calibration.
     """
     
-    def __init__(self, daily_data: MarketData.DailyData):
+    def __init__(self, daily_data: DailyData):
         """
         Initialize market data handler.
         
         Parameters
         ----------
-        daily_data : MarketData.DailyData
+        daily_data : DailyData
             Daily market data
         """
         self.daily_data = daily_data
         self._ois_curve = None
         self._ibor_curve = None
+        self.has_libor_data = not daily_data.euribor_rate_data.empty
         
     def create_ois_curve(self) -> OisCurve:
         """
@@ -63,6 +67,10 @@ class MarketDataHandler:
         IborCurve
             IBOR curve instance
         """
+        if self.has_libor_data is False:
+            # raise ValueError("No EURIBOR rate data available to create IBOR curve.")
+            self._ibor_curve = None
+            return None
         if self._ibor_curve is None:
             self._ibor_curve = IborCurve(
                 self.daily_data.quotation_date,
@@ -84,16 +92,23 @@ class MarketDataHandler:
             Maximum tenor with positive aggregate A
         """
         if self._ibor_curve is None:
-            raise ValueError("IBOR curve not initialized")
+            # raise ValueError("IBOR curve not initialized")
+            # print(" Warning no IBOR data, so OIS max tenor is returned")
+            # import warnings
+            warnings.warn("No IBOR data, so OIS max tenor is returned", UserWarning)
+            max_ois_data = self.daily_data.ois_rate_data["TimeToMat"].max()
+            return max_ois_data
             
         # Update market data with aggregate A values
         for index, ibor_data in self.daily_data.euribor_rate_data.iterrows():
-            rate_data = cast(MarketData.RateData, ibor_data["Object"])
-            rate_data.market_full_a = self._ibor_curve.get_mkt_full_a(ibor_data["TimeToMat"])
-            rate_data.market_aggregate_a = self._ibor_curve.get_mkt_a(ibor_data["TimeToMat"])
-            
+            rate_data = cast(RateData, ibor_data["Object"])
+            rate_data.market_full_a = self._ibor_curve.getMktFullA(ibor_data["TimeToMat"])
+            rate_data.market_aggregate_a = self._ibor_curve.getMktA(ibor_data["TimeToMat"])
+            # rate_data.market_full_a = self._ibor_curve.get_mkt_full_a(ibor_data["TimeToMat"])
+            # rate_data.market_aggregate_a = self._ibor_curve.get_mkt_a(ibor_data["TimeToMat"])
+           
         # Find tenors and aggregate A values
-        tenors = [x.time_to_mat for x in self.daily_data.euribor_rate_data["Object"]]
+        tenors = [x.time_to_maturity for x in self.daily_data.euribor_rate_data["Object"]]
         aggregate_a_list = np.array([x.market_aggregate_a for x in self.daily_data.euribor_rate_data["Object"]])
         
         # Find negative elements
@@ -125,17 +140,17 @@ class MarketDataHandler:
             Whether to use market-based strikes
         """
         for index, swaption_data in self.daily_data.swaption_data_cube.iterrows():
-            swaption = cast(MarketData.SwaptionData, swaption_data["Object"])
+            swaption = cast(SwaptionData, swaption_data["Object"])
             
             # Calculate annuity
             annuity = 0.0
             model_annuity = 0.0
             fixed_leg_delta = self.daily_data.delta_fixed_leg
             
-            for i in range(1, int(swaption.swap_tenor_mat / fixed_leg_delta) + 1):
-                t = swaption.expiry_mat + i * fixed_leg_delta
+            for i in range(1, int(swaption.swap_tenor_maturity / fixed_leg_delta) + 1):
+                t = swaption.expiry_maturity + i * fixed_leg_delta
                 annuity += self._ois_curve.bond_price(t)
-                model_annuity += model.Bond(t)
+                model_annuity += model.bond(t)
                 
             annuity *= fixed_leg_delta
             model_annuity *= fixed_leg_delta
@@ -145,46 +160,68 @@ class MarketDataHandler:
             
             if market_based_strike:
                 # Use market forward swap rate
-                swap_rate = self._ibor_curve.forward_swap_rate(
-                    swaption.expiry_mat,
-                    swaption.expiry_mat + swaption.swap_tenor_mat,
-                    self.daily_data.delta_fixed_leg,
-                    self.daily_data.delta_float_leg,
-                    self._ois_curve
-                )
-                swaption.mkt_forward_swap_rate = swap_rate
+                # swap_rate = self._ibor_curve.forward_swap_rate(
+                if self._ibor_curve is None:
+                    
+                    swap_rate = self._ois_curve.forward_swap_rate(
+                        swaption.expiry_maturity,   
+                        swaption.expiry_maturity + swaption.swap_tenor_maturity,
+                        # 1.0,##self.daily_data.delta_fixed_leg,    
+                        # 1.0,##self.daily_data.delta_float_leg
+                        self.daily_data.ois_delta_float_leg ,
+                        self.daily_data.ois_delta_fixed_leg
+                    )   
+                else:
+                    swap_rate = self._ibor_curve.forward_swap_rate(
+                        swaption.expiry_maturity,
+                        swaption.expiry_maturity + swaption.swap_tenor_maturity,
+                        self.daily_data.delta_fixed_leg,
+                        self.daily_data.delta_float_leg,
+                        self._ois_curve
+                    )
+                 
+                swaption.market_forward_swap_rate = swap_rate
                 swaption.strike = swap_rate + swaption.strike_offset
-                
+                swaption_type='call' ##todo if swaption.
                 # Calculate market price
                 swaption.market_price = bachelier_price(
                     swap_rate,
                     swaption.strike,
-                    swaption.expiry_mat,
-                    swaption.market_vol,
-                    call_or_put=1.0,
+                    swaption.expiry_maturity,
+                    swaption.vol,#market_vol,
+                    option_type = swaption_type, # call_or_put=1.0,
                     numeraire=swaption.annuity
                 )
             else:
                 # Use model forward swap rate
-                model.SetOptionProperties(
-                    swaption.swap_tenor_mat,
-                    swaption.expiry_mat,
-                    self.daily_data.delta_float_leg,
-                    self.daily_data.delta_fixed_leg,
-                    swaption.strike
-                )
-                
-                model_swap_rate = model.ComputeSwapRate()
+                # model.SetOptionProperties(
+                #     swaption.swap_tenor_mat,
+                #     swaption.expiry_mat,
+                #     self.daily_data.delta_float_leg,
+                #     self.daily_data.delta_fixed_leg,
+                #     swaption.strike
+                # )
+                model.set_swaption_config(
+                            SwaptionConfig(
+                            swaption.swap_tenor_maturity,
+                            swaption.expiry_maturity,
+                            swaption.strike,            
+                            self.daily_data.delta_float_leg,
+                            self.daily_data.delta_fixed_leg
+                                ))
+                model_swap_rate = model.compute_swap_rate()
                 swaption.model_forward_swap_rate = model_swap_rate
                 swaption.strike = model_swap_rate + swaption.strike_offset
+                
+                swaption_type='call' ##todo if swaption.
                 
                 # Calculate market price with model annuity
                 swaption.market_price = bachelier_price(
                     model_swap_rate,
                     swaption.strike,
-                    swaption.expiry_mat,
-                    swaption.market_vol,
-                    call_or_put=1.0,
+                    swaption.expiry_maturity,
+                    swaption.vol,
+                    option_type = swaption_type, # call_or_put=1.0,
                     numeraire=swaption.model_annuity
                 )
                 
@@ -207,12 +244,15 @@ class MarketDataHandler:
         )
         
         # Check IBOR data
-        results['ibor_data_present'] = len(self.daily_data.euribor_rate_data) > 0
+        if self.has_libor_data:
+            results['ibor_data_present'] = len(self.daily_data.euribor_rate_data) > 0
+        else:
+            results['ibor_data_present'] = False
         
         # Check swaption data
         results['swaption_data_present'] = len(self.daily_data.swaption_data_cube) > 0
         results['swaption_vols_positive'] = all(
-            data["Object"].market_vol > 0
+            data["Object"].vol > 0
             for _, data in self.daily_data.swaption_data_cube.iterrows()
         )
         
@@ -230,9 +270,9 @@ class MarketDataHandler:
         for tenor in test_tenors:
             try:
                 ois_rate = self._ois_curve.bond_zc_rate(tenor)
-                ibor_forward = self._ibor_curve.forward_rate(0, tenor)
+                ibor_forward = self._ibor_curve.forward_rate(0, tenor) if self._ibor_curve else ois_rate
                 
-                if ibor_forward < ois_rate - 0.01:  # Allow small negative spread
+                if ibor_forward < ois_rate:## - 0.01:  # Allow small negative spread
                     return False
             except:
                 pass
@@ -256,7 +296,7 @@ class MarketDataHandler:
                 'expiry': swaption.expiry_mat,
                 'tenor': swaption.swap_tenor_mat,
                 'strike_offset': swaption.strike_offset,
-                'market_vol': swaption.market_vol,
+                'market_vol': swaption.vol,
                 'market_price': swaption.market_price
             })
             
@@ -286,6 +326,14 @@ class MarketDataHandler:
             Spread data
         """
         spreads = []
+        if self.has_libor_data is False:
+            spreads.append({
+                'tenor': None,
+                'market_spread': None,
+                'model_spread': None,
+                'spread_error': None
+            })
+            return pd.DataFrame(spreads)
         
         for _, ibor_data in self.daily_data.euribor_rate_data.iterrows():
             rate_data = ibor_data["Object"]
@@ -355,6 +403,8 @@ class MarketDataHandler:
     def _create_ibor_dataframe(self) -> pd.DataFrame:
         """Create DataFrame from IBOR data."""
         data = []
+        if self.has_libor_data is False:
+            return pd.DataFrame(data)   
         for _, ibor_data in self.daily_data.euribor_rate_data.iterrows():
             rate_data = ibor_data["Object"]
             data.append({

@@ -25,6 +25,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # from ..pricing.mc_pricer import WishartMonteCarloPricer
 
+from linear_rational_wishart.config.constants import Constants_todo
+# from linear_rational_wishart.config import constants
 from linear_rational_wishart.models.interest_rate.config import SwaptionConfig, LRWModelConfig
 from linear_rational_wishart.models.interest_rate.lrw_model import LRWModel
 from linear_rational_wishart.pricing.swaption_pricer import LRWSwaptionPricer
@@ -100,8 +102,12 @@ def example_swaption_pricing():
     n = 2
     alpha = 0.05
     x0 = jnp.array([[0.12, -0.01], [-0.01, 0.005]])
+    x0 = jnp.array([[0.0012, -0.01], [-0.01, 0.0005]])
     omega = jnp.array([[0.10, 0.002], [0.002, 0.0005]])
-    m = jnp.array([[-0.4, 0.01], [0.02, -0.2]])
+    omega = jnp.array([[0.15, 0.0], [0.0, 0.1]])
+    omega = jnp.array([[0.0010, 0.0005], [0.0005, 0.001]])
+    # m = jnp.array([[-0.4, 0.01], [0.02, -0.2]])
+    m = jnp.array([[-0.04, 0.0], [0.0, -0.02]])
     sigma = jnp.array([[0.05, 0.02], [0.02, 0.047]])
     
     # Swaption parameters
@@ -109,6 +115,7 @@ def example_swaption_pricing():
     tenor = 2.0
     delta_float = 0.5
     delta_fixed = 0.5 #1.0
+    # tenor = 5.0
     
      
     # Initialize model
@@ -137,6 +144,9 @@ def example_swaption_pricing():
     fft_prices= [] #jnp.zeros(n_prices)
     fft_ivs= []
 
+    fft_fast_prices= [] #jnp.zeros(n_prices)
+    fft_fast_ivs= []
+
     mc_prices= []
     mc_ivs= []
 
@@ -144,10 +154,21 @@ def example_swaption_pricing():
     cd_ivs= []
 
     # strike_lists=[atm_strike]
-    nb_run=1
+    nb_run=1#3
+    run_fft_fast=False# True#True
+    run_fft_nn=False#True#True
     run_fft=True
     run_mc=True #False
     run_cd=True#False
+
+    # def set_constant_FAST_SWAPTION_PRICING(value):
+    #     import sys
+
+    #     for name, module in sys.modules.items():
+    #         if name.endswith("constants"):
+    #             if hasattr(module, "FAST_SWAPTION_PRICING"):
+    #                 module.FAST_SWAPTION_PRICING = value
+
     for strike in strike_lists:
 
         swaption_config.strike = strike
@@ -161,15 +182,44 @@ def example_swaption_pricing():
         # Price with different methods
         print("\nSwaption Prices:")
         if run_fft:
+            time_0=time.time()
             for i in range(nb_run):
                 # # FFT pricing
-                time_0=time.time()
+                
                 # try:
                 fft_price, fft_iv = pricer.price_swaption(method="fft", return_implied_vol=True)
-                time_1=time.time()
-                print(f"  FFT:              Strike={strike:.6f}, Price={fft_price:.6f}, IV={fft_iv:.2%}, compute time={time_1-time_0:2f}")
-                fft_prices.append(float(fft_price))
-                fft_ivs.append(float(fft_iv))
+            time_1=time.time()
+            print(f"  FFT:              Strike={strike:.6f}, Price={fft_price:.6f}, IV={fft_iv:.2%}, average compute time={(time_1-time_0)/nb_run:2f}")
+            fft_prices.append(float(fft_price))
+            fft_ivs.append(float(fft_iv))
+
+        if run_fft_fast:
+
+            time_0=time.time()
+            for i in range(nb_run):
+                # # FFT pricing
+                # try:
+                Constants_todo.FAST_SWAPTION_PRICING= True
+                # set_constant_FAST_SWAPTION_PRICING(True)
+                fft_fast_price, fft_fast_iv = pricer.price_swaption(method="fft", return_implied_vol=True)
+            time_1=time.time()
+            print(f"  FFT FAST:         Strike={strike:.6f}, Price={fft_fast_price:.6f}, IV={fft_fast_iv:.2%}, average compute time={(time_1-time_0)/nb_run:2f}")
+            fft_fast_prices.append(float(fft_fast_price))
+            fft_fast_ivs.append(float(fft_fast_iv))
+            Constants_todo.FAST_SWAPTION_PRICING= False
+            # set_constant_FAST_SWAPTION_PRICING(False)
+
+        if run_fft_nn:
+            time_0=time.time()
+            for i in range(nb_run):
+                # # FFT pricing
+                # time_0=time.time()
+                # try:
+                fft_price, fft_iv = pricer.price_swaption(method="neural_network", return_implied_vol=True)
+            time_1=time.time()
+            print(f"  FFT NN:           Strike={strike:.6f}, Price={fft_price:.6f}, IV={fft_iv:.2%}, average compute time={(time_1-time_0)/nb_run:2f}")
+            fft_prices.append(float(fft_price))
+            fft_ivs.append(float(fft_iv))
         # except:
         #     print("  FFT:  Not available")
 
@@ -178,9 +228,12 @@ def example_swaption_pricing():
         #     method="mc", num_paths=10000, dt=0.125, return_implied_vol=False
         # )
         # print(f"  Monte Carlo:      Price={mc_price:.6f}")
+
         if run_mc:
+            time_0=time.time()
+
             for i in range(nb_run):
-                time_0=time.time()    
+                # time_0=time.time()    
                 try:
                     mc_price, mc_iv = pricer.price_swaption(
                         method="mc", num_paths=50000, dt=0.125, return_implied_vol=True
@@ -192,12 +245,13 @@ def example_swaption_pricing():
                     #     nb_mc=5000, dt=0.125,schema  = "EULER_CORRECTED")
                     # print(f"  Monte Carlo:      Strike={strike:.6f}, Price1={mc_price:.6f}, Price2={mc_price2:.6f}")
                     
-                    time_1=time.time()
-                    print(f"  Monte Carlo:      Strike={strike:.6f}, Price={mc_price:.6f}, IV={mc_iv:.2%}, compute time={time_1-time_0:.2f}")
-                    mc_prices.append(float(mc_price))
-                    mc_ivs.append(float(mc_iv))
+                   
                 except:
                     print("  Monte Carlo:  Not available")
+            time_1=time.time()
+            print(f"  Monte Carlo:      Strike={strike:.6f}, Price={mc_price:.6f}, IV={mc_iv:.2%}, average compute time={(time_1-time_0)/nb_run:.2f}")
+            mc_prices.append(float(mc_price))
+            mc_ivs.append(float(mc_iv))
         if run_cd:
             # Approximations
             # cd_price = pricer.price_swaption(
@@ -205,19 +259,20 @@ def example_swaption_pricing():
             #     )
             # print(f"  Collin-Dufresne:  Price={cd_price:.6f} ")
 
+            time_0=time.time()
             for i in range(nb_run):
-                time_0=time.time()
+                # time_0=time.time()
                 try:
                     cd_price, cd_iv = pricer.price_swaption(
                         method="collin_dufresne", return_implied_vol=True
                     )
-                    time_1=time.time()
-                    print(f"  Collin-Dufresne:  Strike={strike:.6f}, Price={cd_price:.6f}, IV={cd_iv:.2%}, compute time={time_1-time_0:.2f}")
-                    cd_prices.append(float(cd_price))
-                    cd_ivs.append(cd_iv)
+                    
                 except:
                     print("  Collin-Dufresne:  Not available")
-    
+            time_1=time.time()
+            print(f"  Collin-Dufresne:  Strike={strike:.6f}, Price={cd_price:.6f}, IV={cd_iv:.2%}, average compute time={(time_1-time_0)/nb_run:.2f}")
+            cd_prices.append(float(cd_price))
+            cd_ivs.append(cd_iv)
         # try:
         #     gamma_price, gamma_iv = pricer.price_swaption(
         #         method="gamma_approx", return_implied_vol=True
@@ -227,16 +282,27 @@ def example_swaption_pricing():
         # except:
         #     print("  Gamma Approx:     Not available")
     
+    print("="*60)
+
     plot_fig=True
     if plot_fig:
         # Plot results
         plt.figure(figsize=(12, 6))
         plt.subplot(1, 2, 1)
         if run_fft:
+            print(f"fft_prices :{fft_prices}")
             plt.plot(strike_lists, fft_prices, label="FFT", marker='o')
+        if run_fft_fast:
+            print(f"fft_fast_prices :{fft_fast_prices}")
+
+            plt.plot(strike_lists, fft_fast_prices, label="FFT FAST", marker='*')
         if run_mc:
+            print(f"mc_prices :{mc_prices}")
+
             plt.plot(strike_lists, mc_prices, label="Monte Carlo", marker='x')
         if run_cd:
+            print(f"cd_prices :{cd_prices}")
+
             plt.plot(strike_lists, cd_prices, label="Collin-Dufresne", marker='s')
         plt.xlabel("Strike")
         plt.ylabel("Swaption Price")
@@ -249,10 +315,16 @@ def example_swaption_pricing():
     
         plt.subplot(1, 2, 2)
         if run_fft:
+            print(f"fft_ivs :{fft_ivs}")
             plt.plot(strike_lists, fft_ivs, label="FFT", marker='o')
+        if run_fft_fast:
+            print(f"fft_fast_ivs :{fft_fast_ivs}")
+            plt.plot(strike_lists, fft_fast_ivs, label="FFT FAST", marker='*')
         if run_mc:
+            print(f"mc_ivs :{mc_ivs}")
             plt.plot(strike_lists,  mc_ivs, label="Monte Carlo", marker='x')
         if run_cd:
+            print(f"cd_ivs :{cd_ivs}")
             plt.plot(strike_lists,  cd_ivs, label="Collin-Dufresne", marker='s')
         plt.xlabel("Strike")
         plt.ylabel("Swaption implied vol")
@@ -629,7 +701,6 @@ def example_swap_exposure():
     for i in range(len(exposure_dates)):
         cProfile = exposure_profile[i,:]
         print(f"{exposure_dates[i]}: Average Exposure: {np.mean(cProfile)}, PFE(95%): {np.percentile(cProfile, 95)}") 
-
   
     
 def example_swaption_exposure():
@@ -680,7 +751,7 @@ def example_swaption_exposure():
 
 
     mc_pricer = WishartMonteCarloPricer(lrw_model)
-    exposure_observation_freq=0.5#0.1#50 #1.0/52
+    exposure_observation_freq=0.5#1.0/12 # 0.5#0.1#50 #1.0/52
     # exposure_dates = list(np.arange(0.0, final_maturity+exposure_observation_freq, exposure_observation_freq))
     exposure_dates = [0.0, 0.5]
     exposure_dates = list(np.arange(0.0, maturity, exposure_observation_freq))
@@ -704,7 +775,7 @@ def example_swaption_exposure():
     # # print(f"Fixed schedule: {fixed_schedule_trade}")
 
     # spread=0.0
-    nb_mc=50#100#100#250#100#15000#00#100#
+    nb_mc=10#100#100#250#100#15000#00#100#
     dt=exposure_observation_freq
     # dt=0.125/5.0
 
@@ -780,8 +851,11 @@ def example_swaption_exposure():
         swaption_pricer = LRWSwaptionPricer(lrw_model)
 
         # exposure_profile = swaption_pricer.compute_swaption_exposure_profile_vectorized_fast(  
-        exposure_profile = swaption_pricer.compute_swaption_exposure_profile_vectorized_2(              
-        # exposure_profile = swaption_pricer.compute_swaption_exposure_profile_vectorized(         
+        # exposure_profile = swaption_pricer.compute_swaption_exposure_profile_vectorized_2(              
+        # exposure_profile = swaption_pricer.compute_swaption_exposure_profile_vectorized(   
+        #       
+        exposure_profile = swaption_pricer.compute_swaption_exposure_profile(              
+
             exposure_dates ,
             swaption_config,
             nb_mc = nb_mc,
@@ -792,7 +866,7 @@ def example_swaption_exposure():
             # pricing_method = "collin_dufresne",
             # pricing_method = "gamma_approx",
             # pricing_method = "mc",
-            batch_size  = 10#500  # Increased batch size for better performance
+            batch_size  = 100#500  # Increased batch size for better performance
 
         #      # exposure_dates: List[float],
         # # initial_swaption_config,
@@ -880,14 +954,14 @@ if __name__ == "__main__":
     print("Linear Rational Wishart Model Basic Examples")
     # Run all examples
     # # example_basic_lrw_setup()     #ok working
-    # example_swaption_pricing()    #ok working
+    example_swaption_pricing()    #ok working
     # example_term_structure()        #ok working
     # example_parameter_comparison() #ok working
     # example_wishart_properties() #ok working
     
     # example_swap_exposure()
-    print("=========================Swaption exposure testing======================================")
-    example_swaption_exposure()
+    # print("=========================Swaption exposure testing======================================")
+    # example_swaption_exposure()
 
     # Keep all plots open
     plt.ioff()  # Turn off interactive mode
