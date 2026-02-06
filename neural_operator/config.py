@@ -22,6 +22,7 @@ class WishartPINNConfig:
     # Network architecture
     hidden_dim: int = 128
     num_highway_blocks: int = 6
+    highway_type: str = "generalized"  # "highway" or "generalized"
     
     # Training
     batch_size: int = 256
@@ -184,6 +185,7 @@ def get_complex_config(
     num_epochs: int = 3000,
     learning_rate: float = 3e-4,
     ui_max: float = 25.0,
+    highway_type="highway",  # Standard shoule be "highway" or "generalized"
     **kwargs
 ) -> WishartPINNConfig:
     """Get configuration for COMPLEX mode training."""
@@ -205,9 +207,10 @@ def get_complex_config(
     
     # Architecture
     dim=2,
+
     hidden_dim=hidden_dim,        # Increased from 128
     num_highway_blocks=num_highway_blocks,  # Increased from 6
-    
+    highway_type=highway_type,##"highway",  # Standard
     # Training
     batch_size=512,
     num_epochs=num_epochs,       # More epochs for better convergence

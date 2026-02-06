@@ -283,7 +283,7 @@ class FourierPricer(BaseSwaptionPricer):
         if recompute_a3_b3:
             self.model.compute_b3_a3()
         
-        print(f"FourierPricer.price: x0={self.model.x0},a3={self.model.a3}, b3={self.model.b3}")
+        # print(f"FourierPricer.price: x0={self.model.x0},a3={self.model.a3}, b3={self.model.b3}")
         # print(f"self.nmax={self.nmax}")
         # Define integrand
         def integrand(ui):

@@ -78,6 +78,8 @@ class ImprovedWishartPINNConfig:
     dim: int = 2
     hidden_dim: int = 256      # INCREASED from 128
     num_highway_blocks: int = 8  # INCREASED from 6
+    highway_type:str ="generalized",  # Standard shoule be "highway" or "generalized"
+    
     batch_size: int = 512
     num_epochs: int = 10000    # INCREASED from 3000-5000
     learning_rate: float = 3e-4
@@ -866,12 +868,14 @@ def main_improved(
         dim=2,
         hidden_dim=128,#256,           # Larger
         num_highway_blocks=6,#8,     # Deeper
+        highway_type="generalized",  # Standard shoule be "highway" or "generalized"
+
         batch_size=512,
         num_epochs= 10000,#5000,#10000,         # Longer training
         learning_rate=3e-4,
         # NEW parameters:
-        low_ui_weight=4.0,        # Focus on low u_i
-        mid_ui_weight=2.0,
+        low_ui_weight=1.0,##4.0,        # Focus on low u_i
+        mid_ui_weight=1.0,#2.0,
         high_ui_weight=1.0,
         use_curriculum=True,      # Enable curriculum
         curriculum_warmup_fraction=0.3,
@@ -904,6 +908,8 @@ def main_improved(
         batch_size=config.batch_size,
         num_epochs=config.num_epochs,
         learning_rate=config.learning_rate,
+        highway_type=config.highway_type,
+
         seed=config.seed
     )
     

@@ -620,7 +620,7 @@ if __name__ == "__main__":
     main_folder = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\linear_rational_wishart"
     main_ouput_folder = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\Output_results\neural_operator\saved_models"
     ouput_folder = main_ouput_folder
-    
+    main_ouput_folder=f"E:\\OneDrive\\Dropbox\\LinearRationalWishart_Work\\Code\\ED\\LinearRationalWishart\\LinearRationalWishart_NewCode\\Output_results\\neural_operator\\saved_models\\manual_merge"
     clear_jax_cache()
 
     # =========================================================================
@@ -635,8 +635,8 @@ if __name__ == "__main__":
         # =========================================================================
         run_train_model = False
         test_model = False
-        run_data_generation = True#False
-        merge_data_set =      False#True#False
+        run_data_generation = False
+        merge_data_set =      True#False#True#False
         check_data_stats =    False
     
         # =========================================================================

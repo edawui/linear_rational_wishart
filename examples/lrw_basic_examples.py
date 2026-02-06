@@ -156,7 +156,7 @@ def example_swaption_pricing():
     # strike_lists=[atm_strike]
     nb_run=1#3
     run_fft_fast=False# True#True
-    run_fft_nn=False#True#True
+    run_fft_nn=True#True
     run_fft=True
     run_mc=True #False
     run_cd=True#False

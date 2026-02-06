@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{be879b23-339c-4923-968c-a26aaf4d3efe}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>neural_operator\example\neural_operator_example.py</StartupFile>
+    <StartupFile>examples\lrw_basic_examples.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -71,8 +71,6 @@
     <Compile Include="examples\lrw_calibration_examples.py" />
     <Compile Include="examples\lrw_jump_calibration_example.py" />
     <Compile Include="examples\lrw_sensitivity_examples_old.py" />
-    <Compile Include="examples\neural_operator_example_fixed.py" />
-    <Compile Include="examples\neural_operator_example_old_not_used.py" />
     <Compile Include="examples\run_all_examples.py" />
     <Compile Include="examples\lrw_sensitivity_examples.py" />
     <Compile Include="examples\set_path.py" />
@@ -100,13 +98,11 @@
     <Compile Include="neural_operator\diagnostic.py" />
     <Compile Include="neural_operator\example\neural_operator_example.py" />
     <Compile Include="neural_operator\example\neural_operator_example_improved.py" />
-    <Compile Include="neural_operator\not_used\evaluate_nn_model_old.py" />
     <Compile Include="neural_operator\example\evaluate_nn_model.py" />
     <Compile Include="neural_operator\fourier_pricing_nn.py" />
     <Compile Include="neural_operator\inference.py" />
-    <Compile Include="neural_operator\not_used\main_example.py" />
+    <Compile Include="neural_operator\model_highway_only.py" />
     <Compile Include="neural_operator\model.py" />
-    <Compile Include="examples\neural_operator_example__old2.py" />
     <Compile Include="neural_operator\training.py" />
     <Compile Include="neural_operator\__init__.py" />
     <Compile Include="others\generate_pdf_report.py" />
@@ -173,6 +169,7 @@
     <Folder Include="enums\" />
     <Folder Include="examples\" />
     <Folder Include="examples\fx_calibration\" />
+    <Folder Include="examples\un_used_examples\" />
     <Folder Include="math\" />
     <Folder Include="models\" />
     <Folder Include="models\fx\" />
@@ -181,7 +178,6 @@
     <Folder Include="models\interest_rate\not_used\" />
     <Folder Include="neural_operator\" />
     <Folder Include="neural_operator\example\" />
-    <Folder Include="neural_operator\not_used\" />
     <Folder Include="pricing\not_used\" />
     <Folder Include="reporting\" />
     <Folder Include="scripts\" />

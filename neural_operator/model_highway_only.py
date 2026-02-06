@@ -2,7 +2,6 @@
 Neural network architecture for Wishart characteristic function approximation.
 
 Supports both REAL and COMPLEX training modes.
-Supports both Highway and Generalized Highway blocks.
 
 Architecture based on:
 - Van Mieghem et al. (2023): Highway networks for option pricing
@@ -94,19 +93,19 @@ def matrix_to_complex_upper_tri(mat: jnp.ndarray) -> jnp.ndarray:
 
 class HighwayBlock(nn.Module):
     """
-    Standard Highway block with gating mechanism.
-    
-    Architecture: h * t + x * (1 - t)
-    where:
-        - h = transform(x)
-        - t = gate(x)
+    Highway block with gating mechanism.
     
     References:
         Srivastava et al. (2015): Training Very Deep Networks
         Van Mieghem et al. (2023): Machine Learning for Option Pricing
     """
+    # def __init__(self,features):
+    #         super().__init__()
+    #         self.features = features
+    #         self.gate_bias = -2.0
+
     features: int
-    gate_bias: float = -2.0
+    gate_bias: float = -4.0#-2.0
     
     @nn.compact
     def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
@@ -125,56 +124,6 @@ class HighwayBlock(nn.Module):
         return h * t + x * (1 - t)
 
 
-class GeneralizedHighwayBlock(nn.Module):
-    """
-    Generalized Highway block with separate transform and carry gates.
-    
-    Architecture: h * t + x * c
-    where:
-        - h = transform(x)
-        - t = transform_gate(x)
-        - c = carry_gate(x)
-    
-    Note: Unlike standard highway where carry = (1 - t), here t and c
-    are independent, allowing more flexible routing of information.
-    
-    This is the architecture recommended by Van Mieghem et al. (2023)
-    as achieving best performance for option pricing.
-    
-    References:
-        Van Mieghem et al. (2023): Machine Learning for Option Pricing
-        - Section on Generalized Highway Networks
-    """
-    features: int
-    transform_gate_bias: float = -2.0  # Start mostly closed
-    carry_gate_bias: float = 2.0       # Start mostly open
-    
-    @nn.compact
-    def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
-        # Transform
-        h = nn.Dense(self.features, name='transform')(x)
-        h = nn.swish(h)
-        
-        # Transform gate (how much of the transformation to use)
-        t = nn.Dense(
-            self.features,
-            bias_init=nn.initializers.constant(self.transform_gate_bias),
-            name='transform_gate'
-        )(x)
-        t = nn.sigmoid(t)
-        
-        # Carry gate (how much of the input to carry through)
-        c = nn.Dense(
-            self.features,
-            bias_init=nn.initializers.constant(self.carry_gate_bias),
-            name='carry_gate'
-        )(x)
-        c = nn.sigmoid(c)
-        
-        # Generalized highway connection
-        return h * t + x * c
-
-
 class WishartCharFuncNetwork(nn.Module):
     """
     Neural network for approximating A(T, Θ) and B(T, Θ).
@@ -191,22 +140,16 @@ class WishartCharFuncNetwork(nn.Module):
         - Output A: (batch, 2 * n_upper) - [real_upper, imag_upper]
         - Output B: (batch, 2) - [real, imag]
     
-    Supports both Highway block types:
-        - "highway": Standard highway (Srivastava et al. 2015)
-        - "generalized": Generalized highway (Van Mieghem et al. 2023 - RECOMMENDED)
-    
     Attributes:
         dim: Matrix dimension (d for d×d matrices)
         hidden_dim: Width of hidden layers
         num_blocks: Number of highway blocks
         mode: "real" or "complex"
-        highway_type: "highway" or "generalized"
     """
     dim: int = 2
     hidden_dim: int = 128
     num_blocks: int = 6
     mode: str = "complex"
-    highway_type: str = "generalized"  # "highway" or "generalized"
 
     @nn.compact
     def __call__(self, inputs: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
@@ -227,16 +170,18 @@ class WishartCharFuncNetwork(nn.Module):
         x = nn.Dense(self.hidden_dim)(inputs)
         x = nn.swish(x)
         
-        # Select highway block type
-        if self.highway_type == "generalized":
-            BlockType = GeneralizedHighwayBlock
-        else:
-            BlockType = HighwayBlock
-        
-        # Stack highway blocks
+        # Highway blocks
         for _ in range(self.num_blocks):
-            x = BlockType(self.hidden_dim)(x)
+            x = HighwayBlock(self.hidden_dim)(x)
         
+        # # What Flax sees internally:
+        # x = HighwayBlock(128)(x)  # Named "HighwayBlock_0"
+        # x = HighwayBlock(128)(x)  # Named "HighwayBlock_1"
+        # x = HighwayBlock(128)(x)  # Named "HighwayBlock_2"
+        # x = HighwayBlock(128)(x)  # Named "HighwayBlock_3"
+        # x = HighwayBlock(128)(x)  # Named "HighwayBlock_4"
+        # x = HighwayBlock(128)(x)  # Named "HighwayBlock_5"
+
         # Output heads depend on mode
         if self.mode == "real":
             A = nn.Dense(n_upper, name='head_A')(x)
@@ -247,7 +192,6 @@ class WishartCharFuncNetwork(nn.Module):
         
         return A, B
 
-
 # =============================================================================
 # MODEL WRAPPER
 # =============================================================================
@@ -257,25 +201,9 @@ class WishartPINNModel:
     Wrapper for the Wishart PINN model with save/load functionality.
     
     Supports both REAL and COMPLEX modes based on config.
-    Supports both Highway and Generalized Highway architectures.
     
     Example:
-        >>> # Standard Highway
-        >>> config = WishartPINNConfig(
-        ...     mode="complex", 
-        ...     dim=2, 
-        ...     hidden_dim=128,
-        ...     highway_type="highway"
-        ... )
-        >>> model = WishartPINNModel(config)
-        >>> 
-        >>> # Generalized Highway (recommended for Wishart)
-        >>> config = WishartPINNConfig(
-        ...     mode="complex", 
-        ...     dim=2, 
-        ...     hidden_dim=256,
-        ...     highway_type="generalized"
-        ... )
+        >>> config = WishartPINNConfig(mode="real", dim=2, hidden_dim=128)
         >>> model = WishartPINNModel(config)
         >>> 
         >>> # Forward pass
@@ -293,12 +221,11 @@ class WishartPINNModel:
         Initialize model.
         
         Args:
-            config: Model configuration (includes mode and highway_type)
+            config: Model configuration (includes mode)
         """
         self.config = config
         self.dim = config.dim
         self.mode = config.mode
-        self.highway_type = config.highway_type
         
         # Calculate dimensions
         d = self.dim
@@ -322,13 +249,12 @@ class WishartPINNModel:
         # Total input dimension: T + theta + m + omega + sigma
         self.input_dim = 1 + self.n_theta + self.n_m + self.n_omega + self.n_sigma
         
-        # Create network with mode and highway_type
+        # Create network with mode
         self.network = WishartCharFuncNetwork(
             dim=config.dim,
             hidden_dim=config.hidden_dim,
             num_blocks=config.num_highway_blocks,
-            mode=self.mode,
-            highway_type=self.highway_type
+            mode=self.mode
         )
         
         # Initialize parameters
@@ -336,8 +262,7 @@ class WishartPINNModel:
         dummy_input = jnp.zeros((1, self.input_dim))
         self.params = self.network.init(key, dummy_input)
         
-        self.output_dim = self.n_A + self.n_B
-        
+        self.ouput_dim=self.n_A + self.n_B
         # Count parameters
         self.n_params = sum(x.size for x in jax.tree_util.tree_leaves(self.params))
     
@@ -354,7 +279,7 @@ class WishartPINNModel:
         Save model to disk.
         
         Saves:
-            - config.json: Model configuration (includes mode and highway_type)
+            - config.json: Model configuration (includes mode)
             - params.pkl: Serialized parameters
         
         Args:
@@ -367,7 +292,7 @@ class WishartPINNModel:
         if params is None:
             params = self.params
         
-        # Save config (includes mode and highway_type)
+        # Save config (includes mode)
         config_path = path / "config.json"
         with open(config_path, 'w') as f:
             json.dump(self.config.to_dict(), f, indent=2)
@@ -377,10 +302,10 @@ class WishartPINNModel:
         with open(params_path, 'wb') as f:
             pickle.dump(serialization.to_bytes(params), f)
         
-        print(f"Model saved to {path} (mode={self.mode}, highway={self.highway_type})")
+        print(f"Model saved to {path} (mode={self.mode})")
     
     @classmethod
-    def load_old(cls, path: str) -> 'WishartPINNModel':
+    def load(cls, path: str) -> 'WishartPINNModel':
         """
         Load model from disk.
         
@@ -392,7 +317,7 @@ class WishartPINNModel:
         """
         path = Path(path)
         
-        # Load config (includes mode and highway_type)
+        # Load config (includes mode)
         config_path = path / "config.json"
         with open(config_path, 'r') as f:
             config_dict = json.load(f)
@@ -407,53 +332,9 @@ class WishartPINNModel:
             params_bytes = pickle.load(f)
         model.params = serialization.from_bytes(model.params, params_bytes)
         
+        # print(f"Model loaded from {path} (mode={model.mode})")
         return model
     
-    @classmethod
-    def load(cls, path: str) -> 'WishartPINNModel':
-        """
-        Load model from disk with backward compatibility.
-    
-        Handles old models without highway_type field.
-    
-        Args:
-            path: Directory path containing saved model
-    
-        Returns:
-            Loaded WishartPINNModel instance with restored parameters
-        """
-        path = Path(path)
-    
-        # Load config
-        config_path = path / "config.json"
-        with open(config_path, 'r') as f:
-            config_dict = json.load(f)
-    
-        # BACKWARD COMPATIBILITY: Add highway_type if missing
-        if 'highway_type' not in config_dict:
-            print(f"Warning: Loading old model without 'highway_type'. Defaulting to 'highway'.")
-            config_dict['highway_type'] = 'highway'
-    
-        # BACKWARD COMPATIBILITY: Add mode if missing (for very old models)
-        if 'mode' not in config_dict:
-            print(f"Warning: Loading old model without 'mode'. Defaulting to 'complex'.")
-            config_dict['mode'] = 'complex'
-    
-        config = WishartPINNConfig.from_dict(config_dict)
-    
-        # Create model (this initializes with random params)
-        model = cls(config)
-    
-        # Load saved parameters
-        params_path = path / "params.pkl"
-        with open(params_path, 'rb') as f:
-            params_bytes = pickle.load(f)
-        model.params = serialization.from_bytes(model.params, params_bytes)
-    
-        print(f"Model loaded from {path} (mode={model.mode}, highway={model.highway_type})")
-    
-        return model
-
     def predict_real(
         self,
         params: Dict,
@@ -515,11 +396,9 @@ class WishartPINNModel:
     def summary(self) -> str:
         """Return model summary string."""
         lines = [
-            "=" * 60,
-            f"Wishart PINN Model Summary",
-            "=" * 60,
-            f"Mode:                {self.mode.upper()}",
-            f"Highway Type:        {self.highway_type.upper()}",
+            "=" * 50,
+            f"Wishart PINN Model Summary (MODE: {self.mode.upper()})",
+            "=" * 50,
             f"Matrix dimension d:  {self.dim}",
             f"Upper tri elements:  {self.n_upper}",
             f"Input dimension:     {self.input_dim}",
@@ -533,36 +412,22 @@ class WishartPINNModel:
             f"Hidden dimension:    {self.config.hidden_dim}",
             f"Highway blocks:      {self.config.num_highway_blocks}",
             f"Total parameters:    {self.n_params:,}",
-            "=" * 60,
+            "=" * 50,
         ]
         return "\n".join(lines)
 
     def count_params(self):
-        """
-        Count parameters in the network.
-        
-        Note: Generalized Highway has ~1.5x parameters vs standard Highway
-        due to the additional carry gate.
-        """
+        #hidden_dim, num_blocks, input_dim=17, output_dim=8):
         # Input projection: input_dim → hidden_dim
         input_proj = self.input_dim * self.config.hidden_dim + self.config.hidden_dim
-        
-        # Each highway block
-        if self.highway_type == "generalized":
-            # Generalized: transform + transform_gate + carry_gate (3 dense layers)
-            per_block = 3 * (self.config.hidden_dim * self.config.hidden_dim + self.config.hidden_dim)
-        else:
-            # Standard: transform + gate (2 dense layers)
-            per_block = 2 * (self.config.hidden_dim * self.config.hidden_dim + self.config.hidden_dim)
-        
+    
+        # Each highway block: 2 dense layers (transform + gate)
+        per_block = 2 * (self.config.hidden_dim * self.config.hidden_dim + self.config.hidden_dim)
         blocks_total = self.config.num_highway_blocks * per_block
-        
+    
         # Output heads: hidden_dim → output_dim
-        output_heads = self.config.hidden_dim * self.output_dim + self.output_dim
-        
+        output_heads = self.config.hidden_dim * self.ouput_dim + self.ouput_dim
+    
         total = input_proj + blocks_total + output_heads
-        
-        print(f"Architecture: {self.highway_type} highway")
-        print(f"{self.config.hidden_dim} × {self.config.num_highway_blocks} blocks: {total:,} params")
-        
+        print(f"{self.config.hidden_dim} × {self.config.num_highway_blocks}: {total:,} params")  
         return total
