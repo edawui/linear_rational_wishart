@@ -616,11 +616,33 @@ def clear_jax_cache():
 # =============================================================================
 
 if __name__ == "__main__":
-    # Configuration - UPDATE THESE PATHS FOR YOUR SYSTEM
-    main_folder = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\linear_rational_wishart"
-    main_ouput_folder = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\Output_results\neural_operator\saved_models"
-    ouput_folder = main_ouput_folder
-    main_ouput_folder=f"E:\\OneDrive\\Dropbox\\LinearRationalWishart_Work\\Code\\ED\\LinearRationalWishart\\LinearRationalWishart_NewCode\\Output_results\\neural_operator\\saved_models\\manual_merge"
+
+    try:
+        shell = get_ipython()
+        in_colab = "google.colab" in str(shell)
+    except NameError:
+        in_colab = False
+
+    # if "google.colab" in str(get_ipython()):
+    if in_colab:
+        from google.colab import drive
+        drive.mount('/content/drive')
+    
+        main_folder = "/content/drive/MyDrive/linear_rational_wishart"
+        ouput_folder = "/content/drive/MyDrive/linear_rational_wishart/outputs/saved_models"
+        main_ouput_folder = "/content/drive/MyDrive/linear_rational_wishart/outputs/saved_models/manual_merge"
+        os.makedirs(ouput_folder, exist_ok=True)
+        os.makedirs(main_ouput_folder, exist_ok=True)
+    else:
+
+        # Configuration - UPDATE THESE PATHS FOR YOUR SYSTEM
+        main_folder = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\linear_rational_wishart"
+        main_ouput_folder = r"E:\OneDrive\Dropbox\LinearRationalWishart_Work\Code\ED\LinearRationalWishart\LinearRationalWishart_NewCode\Output_results\neural_operator\saved_models"
+        ouput_folder = main_ouput_folder
+        main_ouput_folder=f"E:\\OneDrive\\Dropbox\\LinearRationalWishart_Work\\Code\\ED\\LinearRationalWishart\\LinearRationalWishart_NewCode\\Output_results\\neural_operator\\saved_models\\manual_merge"
+        os.makedirs(ouput_folder, exist_ok=True)
+        os.makedirs(main_ouput_folder, exist_ok=True)
+
     clear_jax_cache()
 
     # =========================================================================

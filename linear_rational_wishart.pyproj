@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{be879b23-339c-4923-968c-a26aaf4d3efe}</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>examples\lrw_basic_examples.py</StartupFile>
+    <StartupFile>neural_operator\example\neural_operator_example.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
